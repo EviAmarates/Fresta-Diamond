@@ -1,0 +1,24 @@
+# Python/runtime noise when Diamond is moved to its own repository.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+.venv/
+.mypy_cache/
+.ruff_cache/
+
+# Secrets and machine-specific configuration.
+.env
+.env.*
+!.env.example
+*.local
+
+# Local operator state. Canonical fixtures/baselines remain tracked.
+testdata/local-runtime/
+local-*-data/
+*.log
+*.tmp

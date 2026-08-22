@@ -1,0 +1,40 @@
+{
+  "case_id": "automobile-concept-research",
+  "extends_case": "automobile-concept-validation",
+  "description": "A validated internal concept may request bounded external recognition; every result remains an unvalidated source unit staged for /learn.",
+  "objective": "Research external vocabulary, relations, boundaries, and recognition for the validated automobile concept without granting web authority.",
+  "concept_research": {
+    "max_queries": 4,
+    "max_results_per_query": 1,
+    "results": [
+      {
+        "query_id": "query:features",
+        "title": "Automóvel como veículo motorizado",
+        "snippet": "Uma descrição enciclopédica associa o automóvel a transporte, propulsão e componentes coordenados.",
+        "url": "https://encyclopedia.example/automobile-features",
+        "source_type": "ENCYCLOPEDIC"
+      },
+      {
+        "query_id": "query:relations",
+        "title": "Relações funcionais em sistemas automóveis",
+        "snippet": "Uma fonte técnica descreve motor, transmissão e controlo como subsistemas relacionados na produção de mobilidade.",
+        "url": "https://research.example/automobile-relations",
+        "source_type": "ACADEMIC"
+      },
+      {
+        "query_id": "query:boundaries",
+        "title": "Limites da categoria automóvel",
+        "snippet": "A delimitação varia perante veículos autónomos, protótipos incompletos e agregados sem capacidade funcional de transporte.",
+        "url": "https://standards.test/automobile-boundaries",
+        "source_type": "ACADEMIC"
+      },
+      {
+        "query_id": "query:label",
+        "title": "Automóvel",
+        "snippet": "O termo automóvel é usado para uma classe reconhecida de veículos, embora definições específicas dependam do âmbito.",
+        "url": "https://reference.test/automobile-label",
+        "source_type": "ENCYCLOPEDIC"
+      }
+    ]
+  }
+}

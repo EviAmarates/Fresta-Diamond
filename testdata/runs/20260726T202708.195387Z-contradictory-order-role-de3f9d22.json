@@ -1,0 +1,66 @@
+{
+  "schema": "fresta://diamond-benchmark-run@1",
+  "run_id": "20260726T202708.195387Z-contradictory-order-role-de3f9d22",
+  "suite_id": "diamond-learn-regression",
+  "case_id": "contradictory-order-role",
+  "fixture_sha256": "a1cda03a088b15e1acbd501a91b0ef0daed4b5f00f1e414c16802388d10cd927",
+  "baseline_id": "learn-replay-v5",
+  "mode": "REPLAY",
+  "model": "diamond-replay",
+  "created_at": "2026-07-26T20:27:08.196061+00:00",
+  "matches_baseline": true,
+  "differences": [],
+  "projection": {
+    "technical_completed": true,
+    "structural_closed": false,
+    "constitutional_closed": null,
+    "epistemic_closed": true,
+    "remainder_kinds": [
+      "CONTRADICTION"
+    ],
+    "crystals": [
+      {
+        "source_element_id": "claim:collapsed-orders",
+        "state": "QUARANTINED",
+        "claim_mode": "ATTESTATION",
+        "reason_codes": [
+          "STRUCTURAL_CONTRADICTION"
+        ]
+      }
+    ],
+    "evidence_source_actors": [
+      "source:document"
+    ],
+    "evidence_source_locators": [
+      "document:invalid-analysis:p1"
+    ],
+    "document_identity_boundary_preserved": true,
+    "negative_boundary": [
+      {
+        "source_element_id": "claim:collapsed-orders",
+        "disposition": "EXCLUDED",
+        "phi_minus_justified": true,
+        "reason_codes": [
+          "STRUCTURAL_CONTRADICTION"
+        ],
+        "remainder_kinds": [
+          "CONTRADICTION"
+        ],
+        "promotion_authority": false
+      }
+    ],
+    "learning_memory": {
+      "commit_schema": "fresta://diamond-learning-commit@1",
+      "committed": true,
+      "crystals_committed": 1,
+      "positive_crystals": 0,
+      "indeterminate_crystals": 0,
+      "excluded_crystals": 1,
+      "negative_observations": 1,
+      "justified_phi_minus": 1,
+      "pending_commits": 0,
+      "promotion_authority": false
+    },
+    "model_call_count": 1
+  }
+}

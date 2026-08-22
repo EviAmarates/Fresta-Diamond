@@ -1,0 +1,85 @@
+{
+  "schema": "fresta://diamond-benchmark-baseline@1",
+  "baseline_id": "learn-replay-v1",
+  "suite_id": "diamond-learn-regression",
+  "description": "Primeira baseline determinística da fatia workspace -> learn -> validators -> Gatekeeper.",
+  "cases": {
+    "automobile-attestation": {
+      "technical_completed": true,
+      "structural_closed": true,
+      "constitutional_closed": null,
+      "epistemic_closed": true,
+      "remainder_kinds": [],
+      "crystals": [
+        {
+          "source_element_id": "claim:automobile-energy",
+          "state": "PROVISIONAL",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": [
+            "ATTESTATION_BURDEN_SATISFIED"
+          ]
+        }
+      ],
+      "evidence_source_actors": [
+        "source:document"
+      ],
+      "evidence_source_locators": [
+        "document:automobile-notes:p1"
+      ],
+      "document_identity_boundary_preserved": true,
+      "model_call_count": 1
+    },
+    "fictional-character-boundary": {
+      "technical_completed": true,
+      "structural_closed": true,
+      "constitutional_closed": null,
+      "epistemic_closed": true,
+      "remainder_kinds": [],
+      "crystals": [
+        {
+          "source_element_id": "claim:luke-residence",
+          "state": "PROVISIONAL",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": [
+            "ATTESTATION_BURDEN_SATISFIED"
+          ]
+        }
+      ],
+      "evidence_source_actors": [
+        "source:document"
+      ],
+      "evidence_source_locators": [
+        "document:fictional-narrative:p12"
+      ],
+      "document_identity_boundary_preserved": true,
+      "model_call_count": 1
+    },
+    "invented-provenance": {
+      "technical_completed": true,
+      "structural_closed": false,
+      "constitutional_closed": null,
+      "epistemic_closed": true,
+      "remainder_kinds": [
+        "MISSING_EVIDENCE"
+      ],
+      "crystals": [
+        {
+          "source_element_id": "claim:archive-date",
+          "state": "DEFERRED",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": [
+            "STRUCTURAL_EVIDENCE_INCOMPLETE"
+          ]
+        }
+      ],
+      "evidence_source_actors": [
+        "source:document"
+      ],
+      "evidence_source_locators": [
+        "document:archive-catalogue:p3"
+      ],
+      "document_identity_boundary_preserved": true,
+      "model_call_count": 1
+    }
+  }
+}

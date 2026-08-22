@@ -1,0 +1,400 @@
+{
+  "schema": "fresta://unvalidated-concept-catalog@1",
+  "catalog_id": "notebooklm-ontology-index-2026-08-05",
+  "authority": "UNVALIDATED_CONCEPT_CATALOG",
+  "source": {
+    "filename": "Conceitos Ontológicos e Estruturais da Mecânica Quântica e Sistemas Complexos.xlsx",
+    "sha256": "8e460085bfab14e0cfd924d5bae0aa703c73c7d7946dfe08e96e3f4a067fb90e",
+    "concept_sheet": "Table 1",
+    "concept_range": "A1:G18",
+    "source_sheet": "Referências de fontes",
+    "source_range": "A1:B8",
+    "extraction_method": "NotebookLM-generated workbook supplied by operator"
+  },
+  "cautions": [
+    "Entries are nominations, not learned facts or validated concepts.",
+    "Document indices do not identify exact supporting passages.",
+    "Rows may mix kernel primitives, methods, derived claims, and domain applications.",
+    "No intrinsic O1/O2/O3 role is assigned by this catalog."
+  ],
+  "sources": [
+    {
+      "source_index": "1",
+      "reference": "The Fresta Lens Framework (v2.0) The Anti-Entropy Protocol & Recursive Truth Logic (print version).pdf"
+    },
+    {
+      "source_index": "2",
+      "reference": "Beyond Description A Structural Ontology of Quantum Mechanics and Its Systemic Implications (Print Version).pdf"
+    },
+    {
+      "source_index": "3",
+      "reference": "The Axiom of incompleteness - Why Reality Requires Filtration (Print version).pdf"
+    },
+    {
+      "source_index": "4",
+      "reference": "The Fresta Lens Framework (v2.0) Volume II — Cross-Domain Operationalization (Print Version).pdf"
+    },
+    {
+      "source_index": "5",
+      "reference": "Structural Resolution of the Millennium Problems via Order-Dependent Analysis An Ontological Framework for Persistent Open Systems (Print Version).pdf"
+    },
+    {
+      "source_index": "6",
+      "reference": "TRABALHO FINAL ETNO (FINAL MESMO).pdf"
+    },
+    {
+      "source_index": "7",
+      "reference": "critica pai rico pai pobre (4) (1).pdf"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "notebooklm-concept-row-002",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A2:G2",
+      "canonical_name_candidate": "Filtro (The Filter / Filtração)",
+      "proposed_fields": {
+        "structural_definition": "Estrutura lógica e física pré-matemática composta por restrições imutáveis (Espaço, Tempo, Gravidade). É a restrição necessária que limita o potencial ilimitado.",
+        "application_domain": "Física Fundamental, Ontologia, Sistemas Complexos e Teoria Quântica.",
+        "filtration_role": "Atua como o \"Hardware\" da realidade e mecanismo de seleção que exclui o potencial  unconstrained  para permitir a cristalização da matéria e a existência estável.",
+        "incompleteness_relation": "Garante que a lógica reflete a realidade, suprindo a cegueira de sistemas formais. É o teorema de persistência necessário pois sistemas completos não persistem sem restrição.",
+        "systemic_consequence": "Torna a existência funcional possível e permite a emergência de identidade coerente; sem ele, a complexidade colapsaria em entropia máxima ou ruído."
+      },
+      "source_indices_raw": "1-3",
+      "source_indices": [
+        "1",
+        "2",
+        "3"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-003",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A3:G3",
+      "canonical_name_candidate": "Lente (The Lens)",
+      "proposed_fields": {
+        "structural_definition": "Algoritmo de coerência topológica e instrumento heurístico de segunda ordem (Software/Sistema Operativo) para navegação nas restrições do Filtro.",
+        "application_domain": "IA, Economia, Biologia, Governação de Dados e Sistemas Pós-Gödel.",
+        "filtration_role": "Filtro heurístico que distingue \"Sinal\" (persistência) de \"Ruído\" (entropia), regulando a aplicação do filtro estático e rejeitando estados autodestrutivos.",
+        "incompleteness_relation": "Troca a certeza teórica absoluta (inalcançável por Gödel) pela probabilidade prática de sobrevivência; permite reconhecer limites formais não resolvíveis.",
+        "systemic_consequence": "Inverte o vetor de consumo para recirculação e remove a entropia residual (dívida estrutural), permitindo a persistência de sistemas complexos saturados."
+      },
+      "source_indices_raw": "1, 2, 4",
+      "source_indices": [
+        "1",
+        "2",
+        "4"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-004",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A4:G4",
+      "canonical_name_candidate": "Consciência",
+      "proposed_fields": {
+        "structural_definition": "Mecanismo de simulação virtual (Filtro Recursivo) e manifestação da regulação heurística de segunda ordem para gestão de limites.",
+        "application_domain": "Biologia, Computação Quântica, Neurociência e Cognição.",
+        "filtration_role": "Atua como o observador que colapsa a função de onda e como filtração ativa capaz de atrasar ou estruturar a resolução de estados internamente.",
+        "incompleteness_relation": "Opera como a validação recursiva que evita o \"Kernel Panic\" epistemológico, gerindo o potencial não resolvido sob condições de incompletude.",
+        "systemic_consequence": "Eficiência máxima de processamento e preservação da complexidade; permite ao organismo sentir limites (intuição) sem o custo de fricção do tempo físico."
+      },
+      "source_indices_raw": "1, 2",
+      "source_indices": [
+        "1",
+        "2"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-005",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A5:G5",
+      "canonical_name_candidate": "Coerência (Inverso da Entropia)",
+      "proposed_fields": {
+        "structural_definition": "Estado de sincronização e ressonância de múltiplos nós (definido tecnicamente como \"Amor\" na física da Fresta).",
+        "application_domain": "Física de Partículas, Redes Sociais e Engenharia de Sistemas.",
+        "filtration_role": "Critério de seleção da Lente; apenas o que é coerente é filtrado e armazenado na memória de longo prazo do sistema.",
+        "incompleteness_relation": "Representa a \"Verdade Cristalizada\" que permanece após a destruição do ruído, garantindo a consistência que a matemática pura não providencia.",
+        "systemic_consequence": "Crescimento exponencial da energia disponível ( $E \\propto A^2$ ) e eliminação total da fricção interna do sistema."
+      },
+      "source_indices_raw": "1",
+      "source_indices": [
+        "1"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-006",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A6:G6",
+      "canonical_name_candidate": "Entropia Pós-Gödel",
+      "proposed_fields": {
+        "structural_definition": "Acumulação de erro, ruído e dívida estrutural resultante da operação de sistemas lógicos cegos às suas próprias limitações.",
+        "application_domain": "Termodinâmica de Informação, Mercados Financeiros, IA e Cosmologia Estrutural.",
+        "filtration_role": "Representa o \"lixo\" ou sinal de falha de reintegração que não foi filtrado, gerando calor e esgotamento do hardware sistémico.",
+        "incompleteness_relation": "Manifestação da incompletude sob pressão quando sistemas tentam \"calcular\" a sobrevivência por força bruta, resultando em paralisia analítica.",
+        "systemic_consequence": "Extinção por exaustão térmica, saturação irreversível ou execução de protocolos de \"Garbage Collection\" sistémica (Ragnarök)."
+      },
+      "source_indices_raw": "1, 2",
+      "source_indices": [
+        "1",
+        "2"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-007",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A7:G7",
+      "canonical_name_candidate": "Saturação Gödeliana / Limites Estruturais",
+      "proposed_fields": {
+        "structural_definition": "Ponto onde a complexidade interna atinge o limite imposto pela estrutura lógica e física herdada.",
+        "application_domain": "Resolução dos Problemas do Milénio, Cosmologia Estrutural e Ontologia Pós-Gödel.",
+        "filtration_role": "Mecanismo de filtragem final que impede a geração de entropia excessiva ou inconsistência irrecuperável.",
+        "incompleteness_relation": "Manifestação direta dos limites de Gödel na física; a realidade é filtrada para permanecer dentro dos limites de admissibilidade.",
+        "systemic_consequence": "A persistência é garantida pela impossibilidade de certas soluções; a insolubilidade atua como uma função de estabilidade."
+      },
+      "source_indices_raw": "5",
+      "source_indices": [
+        "5"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-008",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A8:G8",
+      "canonical_name_candidate": "Análise de Três Ordens",
+      "proposed_fields": {
+        "structural_definition": "Método que distingue características intrínsecas (1.ª), interações/propagação (2.ª) e restrições herdadas/estruturais (3.ª).",
+        "application_domain": "Etnomusicologia, Problemas do Milénio e Sistemas Financeiros Complexos.",
+        "filtration_role": "Framework para identificar as restrições que governam sistemas e filtram configurações persistentes contra o ruído.",
+        "incompleteness_relation": "Aborda o impasse onde sistemas não podem ser explicados apenas por regras internas, necessitando de axiomas de restrição de ordens superiores.",
+        "systemic_consequence": "Permite a identificação de padrões persistentes e objetividade sem recorrer a essências imutáveis ou relativismo absoluto."
+      },
+      "source_indices_raw": "5, 6",
+      "source_indices": [
+        "5",
+        "6"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-009",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A9:G9",
+      "canonical_name_candidate": "Colapso e Coerência",
+      "proposed_fields": {
+        "structural_definition": "Processo de seleção e redução de graus de liberdade onde apenas configurações que preservam a coerência global persistem.",
+        "application_domain": "Mecânica Quântica, Geometria Algébrica e Resolução de Estados.",
+        "filtration_role": "Filtro de Admissibilidade que elimina estados não coerentes ou de baixa energia que violariam a integridade estrutural.",
+        "incompleteness_relation": "Visto como um \"artefacto lógico\" da reintrodução da lógica binária em sistemas que operam além da completude formal.",
+        "systemic_consequence": "Realização de estados físicos específicos a partir do potencial; existência de \"gaps\" estruturais necessários para a estabilidade."
+      },
+      "source_indices_raw": "2, 5",
+      "source_indices": [
+        "2",
+        "5"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-010",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A10:G10",
+      "canonical_name_candidate": "Incerteza",
+      "proposed_fields": {
+        "structural_definition": "Limitação da descrição formal e impossibilidade de resolução conjunta de pares de observáveis num único quadro consistente.",
+        "application_domain": "Física Quântica e Limites de Descrição Sistémica.",
+        "filtration_role": "Consequência da filtragem onde a resolução numa dimensão impõe formalmente a indefinição noutra.",
+        "incompleteness_relation": "Aplicação direta dos teoremas de Gödel a sistemas físicos que tentam a auto-descrição global.",
+        "systemic_consequence": "Proteção da coerência através da proibição da resolução total, evitando a auto-contradição e o colapso determinístico."
+      },
+      "source_indices_raw": "2",
+      "source_indices": [
+        "2"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-011",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A11:G11",
+      "canonical_name_candidate": "Superposição",
+      "proposed_fields": {
+        "structural_definition": "Estado de potencial não resolvido ou coexistência de possibilidades mutuamente incompatíveis num espaço de estados.",
+        "application_domain": "Domínio Pré-Físico e Mecânica Quântica.",
+        "filtration_role": "Representa o regime de \"potencial não filtrado\" antes da aplicação de restrições para definir um desfecho único.",
+        "incompleteness_relation": "Representa a abertura combinatória e a incompletude de descrição formal antes da resolução de estados.",
+        "systemic_consequence": "Inviabilidade de persistência a longo prazo, resultando em instabilidade sem a aplicação de filtros seletivos."
+      },
+      "source_indices_raw": "2",
+      "source_indices": [
+        "2"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-012",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A12:G12",
+      "canonical_name_candidate": "Restrições Herdadas / Filtro Orgânico",
+      "proposed_fields": {
+        "structural_definition": "Condições estruturais e práticas sedimentadas que regulam a sobrevivência de configurações de forma autónoma.",
+        "application_domain": "Sistemas Culturais, Evolução Social e Políticas Culturais.",
+        "filtration_role": "Filtro final que explica a persistência de certas identidades; representa a internalização de restrições externas como axiomas internos.",
+        "incompleteness_relation": "Fornece o fundamento externo necessário para a estabilidade que o sistema interno não consegue auto-gerar.",
+        "systemic_consequence": "Garante a persistência orgânica e a durabilidade de uma identidade coerente face à mudança histórica."
+      },
+      "source_indices_raw": "6",
+      "source_indices": [
+        "6"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-013",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A13:G13",
+      "canonical_name_candidate": "Limites Ontológicos do Crescimento",
+      "proposed_fields": {
+        "structural_definition": "Impossibilidade técnica de extrair estrutura infinita de um substrato finito, regida pela termodinâmica.",
+        "application_domain": "Economia Física e Sistemas Ecológicos.",
+        "filtration_role": "Filtro final onde a realidade biofísica descontinua processos de acumulação que ignoram a finitude.",
+        "incompleteness_relation": "Reflete a incompletude de modelos económicos que tentam ser sistemas fechados sem considerar o ambiente externo.",
+        "systemic_consequence": "Colapso acelerado quando a taxa de extração excede a capacidade de regeneração do substrato físico."
+      },
+      "source_indices_raw": "7",
+      "source_indices": [
+        "7"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-014",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A14:G14",
+      "canonical_name_candidate": "Ontologia do Dinheiro e Ativo-Passivo",
+      "proposed_fields": {
+        "structural_definition": "Definição do dinheiro como relação social (IOU) e a equivalência contabilística obrigatória entre ativos e passivos.",
+        "application_domain": "Sistemas Financeiros e Contabilidade.",
+        "filtration_role": "Filtra a ilusão de riqueza líquida agregada; revela que, em sistemas fechados, a riqueza financeira líquida é zero.",
+        "incompleteness_relation": "O valor nominal é um sistema formal que não pode validar a sua própria existência sem a base física extrínseca.",
+        "systemic_consequence": "Fragilidade financeira e \"Momento Minsky\"; o valor desaparece quando as promessas de produção futura falham."
+      },
+      "source_indices_raw": "7",
+      "source_indices": [
+        "7"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-015",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A15:G15",
+      "canonical_name_candidate": "Valor Real vs. Valor Especulativo",
+      "proposed_fields": {
+        "structural_definition": "Distinção entre utilidade por unidade de energia e preço de mercado baseado em transações.",
+        "application_domain": "Economia Ecológica e Análise de Ativos.",
+        "filtration_role": "Regulação heurística que distingue sistemas que sustentam a vida daqueles que consomem recursos em ciclos de hype.",
+        "incompleteness_relation": "O preço é uma descrição incompleta que falha em capturar os custos biofísicos reais de produção.",
+        "systemic_consequence": "Má alocação de recursos e degradação do substrato real em favor de bolhas especulativas."
+      },
+      "source_indices_raw": "7",
+      "source_indices": [
+        "7"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-016",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A16:G16",
+      "canonical_name_candidate": "Fragilidade de Alavancagem",
+      "proposed_fields": {
+        "structural_definition": "Amplificação de perdas em sistemas que usam dívida para ativos sem utilidade tangível ou liquidez.",
+        "application_domain": "Mercados Financeiros e Imobiliário de Luxo.",
+        "filtration_role": "Mecânica de colapso que filtra sistemas frágeis (\"vidro\") durante choques de volatilidade.",
+        "incompleteness_relation": "A dependência de crescimento infinito para validar a dívida cria uma impossibilidade lógica de estabilidade.",
+        "systemic_consequence": "Liquidação forçada e transferência de prejuízos para o coletivo."
+      },
+      "source_indices_raw": "7",
+      "source_indices": [
+        "7"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-017",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A17:G17",
+      "canonical_name_candidate": "Relativismo Subjetivista",
+      "proposed_fields": {
+        "structural_definition": "Orientação que atribui a verdade exclusivamente à experiência pessoal, ignorando critérios externos.",
+        "application_domain": "Psicologia e Redes Sociais.",
+        "filtration_role": "Representa a ausência de filtros ou critérios externos, resultando em vulnerabilidade total ao ruído.",
+        "incompleteness_relation": "Conduz ao impasse lógico onde a classificação é impossível por falta de um referencial estável fora do sujeito.",
+        "systemic_consequence": "Erosão da verdade objetiva e fragmentação da realidade em silos de informação."
+      },
+      "source_indices_raw": "6",
+      "source_indices": [
+        "6"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    },
+    {
+      "entry_id": "notebooklm-concept-row-018",
+      "authority": "UNVALIDATED_CONCEPT_NOMINATION",
+      "source_locator": "spreadsheet:notebooklm-ontology-index:Table 1:A18:G18",
+      "canonical_name_candidate": "Persistência Orgânica vs. Simbólica",
+      "proposed_fields": {
+        "structural_definition": "Diferença entre a continuidade por uso corrente (orgânica) e a sobrevivência via memória ou instituições (simbólica).",
+        "application_domain": "Estudo de Instrumentos Tradicionais e Tradições Culturais.",
+        "filtration_role": "Demonstra o resultado de diferentes configurações de filtros sociais, políticos e institucionais.",
+        "incompleteness_relation": "Ilustra como a \"verdade\" de um objeto persiste através de mecanismos de validação externa ao longo do tempo.",
+        "systemic_consequence": "Determina a robustez e a durabilidade de uma tradição cultural face à mudança histórica."
+      },
+      "source_indices_raw": "6",
+      "source_indices": [
+        "6"
+      ],
+      "validation_refs": [],
+      "derivation_seals": [],
+      "promotion_authority": false
+    }
+  ]
+}

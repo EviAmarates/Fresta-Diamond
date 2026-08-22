@@ -1,0 +1,84 @@
+{
+  "case_id": "invented-provenance",
+  "description": "Invented structural provenance must prevent structural closure.",
+  "objective": "Reject unsupported provenance without deleting the candidate.",
+  "candidate": {
+    "element_id": "claim:archive-date",
+    "kind": "CLAIM",
+    "content": "O arquivo foi criado em 1901.",
+    "scope": "scope:archive-history",
+    "provenance": [
+      "document:archive-catalogue:p3"
+    ]
+  },
+  "provider_bundle": {
+    "structural_evidence": {
+      "analysis_id": "fixture",
+      "object_ref": "fixture",
+      "scope": "scope:archive-history",
+      "analysis_depth": "CONTEXTUAL",
+      "manifestations": [
+        {
+          "manifestation_id": "m1",
+          "object_ref": "fixture",
+          "description": "Uma data atribuída à criação do arquivo.",
+          "provenance": [
+            "invented:unsupported-source"
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "r1",
+          "manifestation_id": "m1",
+          "constraint_id": "c1",
+          "forward_justification": "Uma data histórica exige uma fonte delimitada.",
+          "constraint_effect": "Datas sem proveniência admitida não fecham a análise.",
+          "return_witness": "A alegação continua delimitada como candidatura histórica.",
+          "excluded_cost_id": "cost1",
+          "scope": "scope:archive-history"
+        }
+      ],
+      "constraints": [
+        {
+          "constraint_id": "c1",
+          "description": "A fonte estrutural tem de pertencer à proveniência confiada pela seleção.",
+          "scope": "scope:archive-history"
+        }
+      ],
+      "filters": [
+        {
+          "filter_id": "f1",
+          "constraint_id": "c1",
+          "manifestation_id": "m1",
+          "excluded_cost_id": "cost1",
+          "selection_justification": "Exige uma linhagem auditável para a data."
+        }
+      ],
+      "excluded_costs": [
+        {
+          "cost_id": "cost1",
+          "description": "Aceitação de uma fonte inventada.",
+          "excluded_alternatives": [
+            "inventar proveniência para obter fecho"
+          ]
+        }
+      ],
+      "groundings": [],
+      "advisory_model_closed": true
+    },
+    "candidate_assessments": [
+      {
+        "source_element_id": "claim:archive-date",
+        "claim_mode": "ATTESTATION",
+        "premise_refs": [],
+        "applied_constraints": [],
+        "derivation_direction": null,
+        "test_criterion": null,
+        "horizon": null,
+        "assumptions": [],
+        "counterexample_searches": []
+      }
+    ]
+  }
+}

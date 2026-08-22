@@ -1,0 +1,8 @@
+# Preserve predictable text handling when Diamond becomes a standalone repository.
+* text=auto eol=lf
+
+*.py text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.ps1 text eol=crlf

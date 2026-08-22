@@ -1,0 +1,117 @@
+{
+  "schema": "fresta://diamond-benchmark-baseline@1",
+  "baseline_id": "learn-replay-v7",
+  "suite_id": "diamond-learn-regression",
+  "extends": "learn-replay-v6",
+  "description": "Adds the complete external concept cycle: source units traverse ordinary /learn, enter autonomous memory, and only then support versioned recognition seals.",
+  "cases": {
+    "automobile-concept-integration": {
+      "technical_completed": true,
+      "structural_closed": true,
+      "constitutional_closed": null,
+      "epistemic_closed": true,
+      "remainder_kinds": [],
+      "crystals": [
+        {
+          "source_element_id": "claim:automobile-energy-system",
+          "state": "PROVISIONAL",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": ["ATTESTATION_BURDEN_SATISFIED"]
+        },
+        {
+          "source_element_id": "claim:automobile-functional-identity",
+          "state": "PROVISIONAL",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": ["ATTESTATION_BURDEN_SATISFIED"]
+        }
+      ],
+      "evidence_source_actors": ["source:document"],
+      "evidence_source_locators": [
+        "document:automobile-system:p1",
+        "document:automobile-system:p2"
+      ],
+      "document_identity_boundary_preserved": true,
+      "negative_boundary": [],
+      "learning_memory": {
+        "commit_schema": "fresta://diamond-learning-commit@1",
+        "committed": true,
+        "crystals_committed": 2,
+        "positive_crystals": 2,
+        "indeterminate_crystals": 0,
+        "excluded_crystals": 0,
+        "negative_observations": 0,
+        "justified_phi_minus": 0,
+        "pending_commits": 0,
+        "promotion_authority": false
+      },
+      "concept_candidate": {
+        "concept_id": "concept:automobile",
+        "version": 1,
+        "state": "CANDIDATE",
+        "membership_count": 2,
+        "validation_refs": 0,
+        "parent_link_count": 0,
+        "promotion_authority": false,
+        "intrinsic_order_present": false
+      },
+      "concept_validation": {
+        "validation_id": "validation:automobile-concept-integration",
+        "recommended_state": "VALIDATED",
+        "local_fit": "SUPPORTED",
+        "structural_state": "SUPPORTED",
+        "recognition_state": "NOT_EVALUATED",
+        "definition_state": "SUPPORTED",
+        "remainder_kinds": [],
+        "result_version": 2,
+        "membership_states": ["SUPPORTED", "SUPPORTED"],
+        "derivation_seals": 7,
+        "report_archived": true,
+        "concept_version_archived": true,
+        "promotion_authority": false
+      },
+      "concept_research": {
+        "technical_completed": true,
+        "effect_calls": 1,
+        "query_ids": [
+          "query:features",
+          "query:relations",
+          "query:boundaries",
+          "query:label"
+        ],
+        "neutral_query_first": true,
+        "label_query_last": true,
+        "source_units": 4,
+        "source_types": ["ACADEMIC", "ENCYCLOPEDIC"],
+        "staged_elements": 4,
+        "selection_authority": "UNVALIDATED_WORKSPACE_PROPOSAL",
+        "learn_handoff_schema": "artifact://workspace-selection@1",
+        "required_next_step": "workspace.stage_then_learn",
+        "promotion_authority": false
+      },
+      "concept_integration": {
+        "model_call_count": 1,
+        "external_commit": true,
+        "external_crystals": 4,
+        "external_states": [
+          "PROVISIONAL",
+          "PROVISIONAL",
+          "PROVISIONAL",
+          "PROVISIONAL"
+        ],
+        "recognition_state": "SUPPORTED",
+        "external_definition_state": "SUPPORTED",
+        "result_version": 3,
+        "concept_state": "VALIDATED",
+        "concept_recognition_state": "SUPPORTED",
+        "concept_definition_state": "SUPPORTED",
+        "web_seals": 4,
+        "source_locators": 4,
+        "source_types": ["ACADEMIC", "ENCYCLOPEDIC"],
+        "report_archived": true,
+        "concept_version_archived": true,
+        "promotion_authority": false
+      },
+      "model_call_count": 1
+    }
+  }
+}

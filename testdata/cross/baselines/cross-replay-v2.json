@@ -1,0 +1,108 @@
+{
+  "schema": "fresta://diamond-frankenstein-cross-baseline@1",
+  "baseline_id": "cross-replay-v2",
+  "suite_id": "diamond-frankenstein-learn-replay",
+  "description": "Comparação após o Diamond ganhar persistência autónoma de LearningCommit.",
+  "cases": {
+    "automobile-attestation": {
+      "both_technically_completed": true,
+      "both_preserve_document_identity_boundary": true,
+      "diamond_dispositions": [
+        "PROVISIONAL"
+      ],
+      "frankenstein_dispositions": [
+        "INDETERMINATE"
+      ],
+      "disposition_agreement": false,
+      "diamond_phi_minus_justified": [
+        false
+      ],
+      "frankenstein_epistemic_states": [
+        "DEFERRED"
+      ],
+      "frankenstein_owners": [
+        "document"
+      ],
+      "frankenstein_subjects": [
+        "external_entity"
+      ],
+      "frankenstein_cards_saved": 1,
+      "diamond_persisted_cards": 1
+    },
+    "fictional-character-boundary": {
+      "both_technically_completed": true,
+      "both_preserve_document_identity_boundary": true,
+      "diamond_dispositions": [
+        "PROVISIONAL"
+      ],
+      "frankenstein_dispositions": [
+        "INDETERMINATE"
+      ],
+      "disposition_agreement": false,
+      "diamond_phi_minus_justified": [
+        false
+      ],
+      "frankenstein_epistemic_states": [
+        "DEFERRED"
+      ],
+      "frankenstein_owners": [
+        "document"
+      ],
+      "frankenstein_subjects": [
+        "external_entity"
+      ],
+      "frankenstein_cards_saved": 1,
+      "diamond_persisted_cards": 1
+    },
+    "invented-provenance": {
+      "both_technically_completed": true,
+      "both_preserve_document_identity_boundary": true,
+      "diamond_dispositions": [
+        "INDETERMINATE"
+      ],
+      "frankenstein_dispositions": [
+        "INDETERMINATE"
+      ],
+      "disposition_agreement": true,
+      "diamond_phi_minus_justified": [
+        false
+      ],
+      "frankenstein_epistemic_states": [
+        "DEFERRED"
+      ],
+      "frankenstein_owners": [
+        "document"
+      ],
+      "frankenstein_subjects": [
+        "external_entity"
+      ],
+      "frankenstein_cards_saved": 1,
+      "diamond_persisted_cards": 1
+    },
+    "contradictory-order-role": {
+      "both_technically_completed": true,
+      "both_preserve_document_identity_boundary": true,
+      "diamond_dispositions": [
+        "EXCLUDED"
+      ],
+      "frankenstein_dispositions": [
+        "INDETERMINATE"
+      ],
+      "disposition_agreement": false,
+      "diamond_phi_minus_justified": [
+        true
+      ],
+      "frankenstein_epistemic_states": [
+        "DEFERRED"
+      ],
+      "frankenstein_owners": [
+        "document"
+      ],
+      "frankenstein_subjects": [
+        "external_entity"
+      ],
+      "frankenstein_cards_saved": 1,
+      "diamond_persisted_cards": 1
+    }
+  }
+}

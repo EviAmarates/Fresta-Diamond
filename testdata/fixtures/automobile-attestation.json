@@ -1,0 +1,84 @@
+{
+  "case_id": "automobile-attestation",
+  "description": "A document claim remains an attestation and does not become confirmed knowledge.",
+  "objective": "Evaluate the automobile claim without assuming that the document is true.",
+  "candidate": {
+    "element_id": "claim:automobile-energy",
+    "kind": "CLAIM",
+    "content": "Um automóvel transforma energia em movimento.",
+    "scope": "scope:automobiles",
+    "provenance": [
+      "document:automobile-notes:p1"
+    ]
+  },
+  "provider_bundle": {
+    "structural_evidence": {
+      "analysis_id": "fixture",
+      "object_ref": "fixture",
+      "scope": "scope:automobiles",
+      "analysis_depth": "CONTEXTUAL",
+      "manifestations": [
+        {
+          "manifestation_id": "m1",
+          "object_ref": "fixture",
+          "description": "A transformação de energia em movimento é a manifestação delimitada.",
+          "provenance": [
+            "document:automobile-notes:p1"
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "r1",
+          "manifestation_id": "m1",
+          "constraint_id": "c1",
+          "forward_justification": "A função proposta exige uma relação entre fonte de energia e movimento.",
+          "constraint_effect": "Configurações sem transformação funcional deixam de satisfazer o objeto.",
+          "return_witness": "A descrição continua a identificar uma função automóvel delimitada.",
+          "excluded_cost_id": "cost1",
+          "scope": "scope:automobiles"
+        }
+      ],
+      "constraints": [
+        {
+          "constraint_id": "c1",
+          "description": "Coerência funcional no âmbito de automóveis.",
+          "scope": "scope:automobiles"
+        }
+      ],
+      "filters": [
+        {
+          "filter_id": "f1",
+          "constraint_id": "c1",
+          "manifestation_id": "m1",
+          "excluded_cost_id": "cost1",
+          "selection_justification": "Seleciona configurações que preservam a transformação funcional proposta."
+        }
+      ],
+      "excluded_costs": [
+        {
+          "cost_id": "cost1",
+          "description": "Perda da função delimitada.",
+          "excluded_alternatives": [
+            "configurações sem transformação coerente de energia em movimento"
+          ]
+        }
+      ],
+      "groundings": [],
+      "advisory_model_closed": true
+    },
+    "candidate_assessments": [
+      {
+        "source_element_id": "claim:automobile-energy",
+        "claim_mode": "ATTESTATION",
+        "premise_refs": [],
+        "applied_constraints": [],
+        "derivation_direction": null,
+        "test_criterion": null,
+        "horizon": null,
+        "assumptions": [],
+        "counterexample_searches": []
+      }
+    ]
+  }
+}

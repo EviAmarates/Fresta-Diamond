@@ -1,0 +1,51 @@
+{
+  "schema": "fresta://diamond-benchmark-run@1",
+  "run_id": "20260726T205437.903765Z-fictional-character-boundary-3535e9cd",
+  "suite_id": "diamond-learn-regression",
+  "case_id": "fictional-character-boundary",
+  "fixture_sha256": "e9171eb6509b189d38057c77c8982dc2fbb46c9a6d5e0f761ec2f040ba3dc627",
+  "baseline_id": "learn-replay-v7",
+  "mode": "REPLAY",
+  "model": "diamond-replay",
+  "created_at": "2026-07-26T20:54:37.904595+00:00",
+  "matches_baseline": true,
+  "differences": [],
+  "projection": {
+    "technical_completed": true,
+    "structural_closed": true,
+    "constitutional_closed": null,
+    "epistemic_closed": true,
+    "remainder_kinds": [],
+    "crystals": [
+      {
+        "source_element_id": "claim:luke-residence",
+        "state": "PROVISIONAL",
+        "claim_mode": "ATTESTATION",
+        "reason_codes": [
+          "ATTESTATION_BURDEN_SATISFIED"
+        ]
+      }
+    ],
+    "evidence_source_actors": [
+      "source:document"
+    ],
+    "evidence_source_locators": [
+      "document:fictional-narrative:p12"
+    ],
+    "document_identity_boundary_preserved": true,
+    "negative_boundary": [],
+    "learning_memory": {
+      "commit_schema": "fresta://diamond-learning-commit@1",
+      "committed": true,
+      "crystals_committed": 1,
+      "positive_crystals": 1,
+      "indeterminate_crystals": 0,
+      "excluded_crystals": 0,
+      "negative_observations": 0,
+      "justified_phi_minus": 0,
+      "pending_commits": 0,
+      "promotion_authority": false
+    },
+    "model_call_count": 1
+  }
+}

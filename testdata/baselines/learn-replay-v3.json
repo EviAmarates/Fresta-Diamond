@@ -1,0 +1,190 @@
+{
+  "schema": "fresta://diamond-benchmark-baseline@1",
+  "baseline_id": "learn-replay-v3",
+  "suite_id": "diamond-learn-regression",
+  "description": "Baseline com commit atómico da memória autónoma, cristais e fronteira Φ− inseparáveis.",
+  "cases": {
+    "automobile-attestation": {
+      "technical_completed": true,
+      "structural_closed": true,
+      "constitutional_closed": null,
+      "epistemic_closed": true,
+      "remainder_kinds": [],
+      "crystals": [
+        {
+          "source_element_id": "claim:automobile-energy",
+          "state": "PROVISIONAL",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": [
+            "ATTESTATION_BURDEN_SATISFIED"
+          ]
+        }
+      ],
+      "evidence_source_actors": [
+        "source:document"
+      ],
+      "evidence_source_locators": [
+        "document:automobile-notes:p1"
+      ],
+      "document_identity_boundary_preserved": true,
+      "negative_boundary": [],
+      "learning_memory": {
+        "commit_schema": "fresta://diamond-learning-commit@1",
+        "committed": true,
+        "crystals_committed": 1,
+        "positive_crystals": 1,
+        "indeterminate_crystals": 0,
+        "excluded_crystals": 0,
+        "negative_observations": 0,
+        "justified_phi_minus": 0,
+        "pending_commits": 0,
+        "promotion_authority": false
+      },
+      "model_call_count": 1
+    },
+    "fictional-character-boundary": {
+      "technical_completed": true,
+      "structural_closed": true,
+      "constitutional_closed": null,
+      "epistemic_closed": true,
+      "remainder_kinds": [],
+      "crystals": [
+        {
+          "source_element_id": "claim:luke-residence",
+          "state": "PROVISIONAL",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": [
+            "ATTESTATION_BURDEN_SATISFIED"
+          ]
+        }
+      ],
+      "evidence_source_actors": [
+        "source:document"
+      ],
+      "evidence_source_locators": [
+        "document:fictional-narrative:p12"
+      ],
+      "document_identity_boundary_preserved": true,
+      "negative_boundary": [],
+      "learning_memory": {
+        "commit_schema": "fresta://diamond-learning-commit@1",
+        "committed": true,
+        "crystals_committed": 1,
+        "positive_crystals": 1,
+        "indeterminate_crystals": 0,
+        "excluded_crystals": 0,
+        "negative_observations": 0,
+        "justified_phi_minus": 0,
+        "pending_commits": 0,
+        "promotion_authority": false
+      },
+      "model_call_count": 1
+    },
+    "invented-provenance": {
+      "technical_completed": true,
+      "structural_closed": false,
+      "constitutional_closed": null,
+      "epistemic_closed": true,
+      "remainder_kinds": [
+        "MISSING_EVIDENCE"
+      ],
+      "crystals": [
+        {
+          "source_element_id": "claim:archive-date",
+          "state": "DEFERRED",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": [
+            "STRUCTURAL_EVIDENCE_INCOMPLETE"
+          ]
+        }
+      ],
+      "evidence_source_actors": [
+        "source:document"
+      ],
+      "evidence_source_locators": [
+        "document:archive-catalogue:p3"
+      ],
+      "document_identity_boundary_preserved": true,
+      "negative_boundary": [
+        {
+          "source_element_id": "claim:archive-date",
+          "disposition": "INDETERMINATE",
+          "phi_minus_justified": false,
+          "reason_codes": [
+            "STRUCTURAL_EVIDENCE_INCOMPLETE"
+          ],
+          "remainder_kinds": [
+            "MISSING_EVIDENCE"
+          ],
+          "promotion_authority": false
+        }
+      ],
+      "learning_memory": {
+        "commit_schema": "fresta://diamond-learning-commit@1",
+        "committed": true,
+        "crystals_committed": 1,
+        "positive_crystals": 0,
+        "indeterminate_crystals": 1,
+        "excluded_crystals": 0,
+        "negative_observations": 1,
+        "justified_phi_minus": 0,
+        "pending_commits": 0,
+        "promotion_authority": false
+      },
+      "model_call_count": 1
+    },
+    "contradictory-order-role": {
+      "technical_completed": true,
+      "structural_closed": false,
+      "constitutional_closed": null,
+      "epistemic_closed": true,
+      "remainder_kinds": [
+        "CONTRADICTION"
+      ],
+      "crystals": [
+        {
+          "source_element_id": "claim:collapsed-orders",
+          "state": "QUARANTINED",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": [
+            "STRUCTURAL_CONTRADICTION"
+          ]
+        }
+      ],
+      "evidence_source_actors": [
+        "source:document"
+      ],
+      "evidence_source_locators": [
+        "document:invalid-analysis:p1"
+      ],
+      "document_identity_boundary_preserved": true,
+      "negative_boundary": [
+        {
+          "source_element_id": "claim:collapsed-orders",
+          "disposition": "EXCLUDED",
+          "phi_minus_justified": true,
+          "reason_codes": [
+            "STRUCTURAL_CONTRADICTION"
+          ],
+          "remainder_kinds": [
+            "CONTRADICTION"
+          ],
+          "promotion_authority": false
+        }
+      ],
+      "learning_memory": {
+        "commit_schema": "fresta://diamond-learning-commit@1",
+        "committed": true,
+        "crystals_committed": 1,
+        "positive_crystals": 0,
+        "indeterminate_crystals": 0,
+        "excluded_crystals": 1,
+        "negative_observations": 1,
+        "justified_phi_minus": 1,
+        "pending_commits": 0,
+        "promotion_authority": false
+      },
+      "model_call_count": 1
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "fresta://diamond-frankenstein-cross-manifest@1",
+  "suite_id": "diamond-frankenstein-learn-replay",
+  "baseline_id": "cross-replay-v2",
+  "cases": [
+    "automobile-attestation",
+    "fictional-character-boundary",
+    "invented-provenance",
+    "contradictory-order-role"
+  ]
+}

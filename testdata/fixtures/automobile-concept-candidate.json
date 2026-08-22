@@ -1,0 +1,133 @@
+{
+  "case_id": "automobile-concept-candidate",
+  "description": "Two committed positive crystals may nominate an order-free concept candidate, never validate it.",
+  "objective": "Evaluate two automobile claims and nominate a bounded concept without granting validation.",
+  "candidates": [
+    {
+      "element_id": "claim:automobile-energy-system",
+      "kind": "CLAIM",
+      "content": "Um automóvel transforma energia em movimento através de componentes coordenados.",
+      "scope": "scope:automobile-concept",
+      "provenance": [
+        "document:automobile-system:p1"
+      ]
+    },
+    {
+      "element_id": "claim:automobile-functional-identity",
+      "kind": "CLAIM",
+      "content": "A identidade funcional de um automóvel depende da preservação das relações entre os seus componentes.",
+      "scope": "scope:automobile-concept",
+      "provenance": [
+        "document:automobile-system:p2"
+      ]
+    }
+  ],
+  "concept_proposal": {
+    "concept_id": "concept:automobile",
+    "canonical_name": "Automóvel",
+    "aliases": [
+      "Carro"
+    ],
+    "signature": {
+      "characteristics": [
+        "sistema composto com identidade funcional delimitada"
+      ],
+      "relations": [
+        "componentes coordenados transformam energia em movimento"
+      ],
+      "functions": [
+        "mobilidade controlada"
+      ],
+      "constraints": [
+        "as relações funcionais necessárias têm de permanecer coerentes"
+      ],
+      "exclusions": [
+        "agregados de componentes sem função de mobilidade coerente"
+      ],
+      "examples": [],
+      "counterexamples": []
+    }
+  },
+  "provider_bundle": {
+    "structural_evidence": {
+      "analysis_id": "fixture",
+      "object_ref": "fixture",
+      "scope": "scope:automobile-concept",
+      "analysis_depth": "CONTEXTUAL",
+      "manifestations": [
+        {
+          "manifestation_id": "m1",
+          "object_ref": "fixture",
+          "description": "Um sistema automóvel composto transforma energia preservando relações funcionais identificáveis.",
+          "provenance": [
+            "document:automobile-system:p1",
+            "document:automobile-system:p2"
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "r1",
+          "manifestation_id": "m1",
+          "constraint_id": "c1",
+          "forward_justification": "A coordenação dos componentes liga transformação energética e identidade funcional.",
+          "constraint_effect": "Configurações que perdem as relações funcionais deixam de satisfazer o objeto automóvel delimitado.",
+          "return_witness": "A função de mobilidade continua reconhecível enquanto as relações necessárias persistem.",
+          "excluded_cost_id": "cost1",
+          "scope": "scope:automobile-concept"
+        }
+      ],
+      "constraints": [
+        {
+          "constraint_id": "c1",
+          "description": "Coerência das relações funcionais necessárias à mobilidade controlada.",
+          "scope": "scope:automobile-concept"
+        }
+      ],
+      "filters": [
+        {
+          "filter_id": "f1",
+          "constraint_id": "c1",
+          "manifestation_id": "m1",
+          "excluded_cost_id": "cost1",
+          "selection_justification": "Seleciona sistemas cujos componentes preservam uma função automóvel coerente."
+        }
+      ],
+      "excluded_costs": [
+        {
+          "cost_id": "cost1",
+          "description": "Perda da identidade funcional de mobilidade.",
+          "excluded_alternatives": [
+            "agregados sem coordenação funcional"
+          ]
+        }
+      ],
+      "groundings": [],
+      "advisory_model_closed": true
+    },
+    "candidate_assessments": [
+      {
+        "source_element_id": "claim:automobile-energy-system",
+        "claim_mode": "ATTESTATION",
+        "premise_refs": [],
+        "applied_constraints": [],
+        "derivation_direction": null,
+        "test_criterion": null,
+        "horizon": null,
+        "assumptions": [],
+        "counterexample_searches": []
+      },
+      {
+        "source_element_id": "claim:automobile-functional-identity",
+        "claim_mode": "ATTESTATION",
+        "premise_refs": [],
+        "applied_constraints": [],
+        "derivation_direction": null,
+        "test_criterion": null,
+        "horizon": null,
+        "assumptions": [],
+        "counterexample_searches": []
+      }
+    ]
+  }
+}

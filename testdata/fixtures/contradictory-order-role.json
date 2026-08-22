@@ -1,0 +1,84 @@
+{
+  "case_id": "contradictory-order-role",
+  "description": "Reusing the same evidence identity as O1 and O3 is a justified structural exclusion.",
+  "objective": "Detect an unjustified collapse between manifestation and constraint roles.",
+  "candidate": {
+    "element_id": "claim:collapsed-orders",
+    "kind": "CLAIM",
+    "content": "A manifestação justifica-se a si própria como a sua própria restrição.",
+    "scope": "scope:order-validation",
+    "provenance": [
+      "document:invalid-analysis:p1"
+    ]
+  },
+  "provider_bundle": {
+    "structural_evidence": {
+      "analysis_id": "fixture",
+      "object_ref": "fixture",
+      "scope": "scope:order-validation",
+      "analysis_depth": "CONTEXTUAL",
+      "manifestations": [
+        {
+          "manifestation_id": "same-role",
+          "object_ref": "fixture",
+          "description": "A manifestação proposta.",
+          "provenance": [
+            "document:invalid-analysis:p1"
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "r1",
+          "manifestation_id": "same-role",
+          "constraint_id": "same-role",
+          "forward_justification": "A descrição repete-se como justificação.",
+          "constraint_effect": "A descrição tenta restringir-se apenas por identidade nominal.",
+          "return_witness": "A mesma descrição é devolvida sem relação independente.",
+          "excluded_cost_id": "cost1",
+          "scope": "scope:order-validation"
+        }
+      ],
+      "constraints": [
+        {
+          "constraint_id": "same-role",
+          "description": "A mesma identidade é reutilizada como restrição.",
+          "scope": "scope:order-validation"
+        }
+      ],
+      "filters": [
+        {
+          "filter_id": "f1",
+          "constraint_id": "same-role",
+          "manifestation_id": "same-role",
+          "excluded_cost_id": "cost1",
+          "selection_justification": "Tentativa circular de selecionar a manifestação por ela própria."
+        }
+      ],
+      "excluded_costs": [
+        {
+          "cost_id": "cost1",
+          "description": "Ausência de uma relação O2 independente.",
+          "excluded_alternatives": [
+            "nomeação circular sem efeito restritivo"
+          ]
+        }
+      ],
+      "groundings": [],
+      "advisory_model_closed": true
+    },
+    "candidate_assessments": [
+      {
+        "source_element_id": "claim:collapsed-orders",
+        "claim_mode": "ATTESTATION",
+        "premise_refs": [],
+        "applied_constraints": [],
+        "derivation_direction": null,
+        "test_criterion": null,
+        "horizon": null,
+        "assumptions": [],
+        "counterexample_searches": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "case_id": "fictional-character-boundary",
+  "description": "A statement about a fictional character keeps document provenance and never becomes user identity.",
+  "objective": "Evaluate the bounded fictional-character statement while preserving actor and provenance boundaries.",
+  "candidate": {
+    "element_id": "claim:luke-residence",
+    "kind": "CLAIM",
+    "content": "Luke Skywalker vive em Tatooine no universo narrativo de Star Wars.",
+    "scope": "scope:fictional-narratives",
+    "provenance": [
+      "document:fictional-narrative:p12"
+    ]
+  },
+  "provider_bundle": {
+    "structural_evidence": {
+      "analysis_id": "fixture",
+      "object_ref": "fixture",
+      "scope": "scope:fictional-narratives",
+      "analysis_depth": "CONTEXTUAL",
+      "manifestations": [
+        {
+          "manifestation_id": "m1",
+          "object_ref": "fixture",
+          "description": "Uma atribuição narrativa de residência a uma personagem ficcional.",
+          "provenance": [
+            "document:fictional-narrative:p12"
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "r1",
+          "manifestation_id": "m1",
+          "constraint_id": "c1",
+          "forward_justification": "A atribuição só é admissível dentro do universo narrativo delimitado.",
+          "constraint_effect": "Impede transferir a predicação da personagem para o utilizador ou para o mundo empírico.",
+          "return_witness": "A personagem e o local permanecem ligados no mesmo âmbito narrativo.",
+          "excluded_cost_id": "cost1",
+          "scope": "scope:fictional-narratives"
+        }
+      ],
+      "constraints": [
+        {
+          "constraint_id": "c1",
+          "description": "Preservação da fronteira entre entidade narrativa, fonte documental e utilizador.",
+          "scope": "scope:fictional-narratives"
+        }
+      ],
+      "filters": [
+        {
+          "filter_id": "f1",
+          "constraint_id": "c1",
+          "manifestation_id": "m1",
+          "excluded_cost_id": "cost1",
+          "selection_justification": "Mantém apenas interpretações compatíveis com o âmbito ficcional declarado."
+        }
+      ],
+      "excluded_costs": [
+        {
+          "cost_id": "cost1",
+          "description": "Contaminação de identidade entre personagem, narrador, fonte e utilizador.",
+          "excluded_alternatives": [
+            "tratar Luke Skywalker como o utilizador",
+            "tratar a narrativa como observação direta"
+          ]
+        }
+      ],
+      "groundings": [],
+      "advisory_model_closed": true
+    },
+    "candidate_assessments": [
+      {
+        "source_element_id": "claim:luke-residence",
+        "claim_mode": "ATTESTATION",
+        "premise_refs": [],
+        "applied_constraints": [],
+        "derivation_direction": null,
+        "test_criterion": null,
+        "horizon": null,
+        "assumptions": [],
+        "counterexample_searches": []
+      }
+    ]
+  }
+}

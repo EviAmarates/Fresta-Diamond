@@ -1,0 +1,10 @@
+{
+  "case_id": "automobile-concept-integration",
+  "extends_case": "automobile-concept-research",
+  "description": "External source units must traverse ordinary /learn before they may support recognition and external-definition axes on a new concept version.",
+  "objective": "Learn the bounded external automobile reports, preserve their source locators, and review external recognition without changing local concept validity.",
+  "concept_integration": {
+    "claim_mode": "ATTESTATION",
+    "created_at": "2026-07-26T18:00:00+00:00"
+  }
+}

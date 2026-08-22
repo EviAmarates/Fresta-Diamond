@@ -1,0 +1,110 @@
+{
+  "case_id": "automobile-concept-validation",
+  "extends_case": "automobile-concept-candidate",
+  "description": "A closed internal analysis with field-level lineage may validate an order-free concept while leaving external recognition unevaluated.",
+  "objective": "Validate the nominated automobile concept from committed internal evidence and preserve the derivation of every concept part.",
+  "concept_validation": {
+    "created_at": "2026-07-26T12:00:00+00:00",
+    "structural_graph": {
+      "analysis_id": "analysis:automobile-concept-validation",
+      "object_ref": "concept:automobile@1",
+      "scope": "scope:automobile-concept",
+      "analysis_depth": "CONTEXTUAL",
+      "manifestations": [
+        {
+          "manifestation_id": "manifestation:automobile-members",
+          "object_ref": "concept:automobile@1",
+          "description": "Os cristais committed manifestam transformação energética e identidade funcional no mesmo sistema delimitado.",
+          "provenance": [
+            "document:automobile-system:p1",
+            "document:automobile-system:p2"
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "relation:automobile-functional-fit",
+          "manifestation_id": "manifestation:automobile-members",
+          "constraint_id": "constraint:automobile-coherence",
+          "forward_justification": "A coordenação dos componentes relaciona transformação energética, mobilidade e identidade funcional.",
+          "constraint_effect": "Só configurações que preservam a função delimitada permanecem membros admissíveis.",
+          "return_witness": "Os dois cristais continuam a testemunhar o mesmo sistema funcional automóvel.",
+          "excluded_cost_id": "cost:automobile-incoherence",
+          "scope": "scope:automobile-concept"
+        }
+      ],
+      "constraints": [
+        {
+          "constraint_id": "constraint:automobile-coherence",
+          "description": "As relações necessárias à mobilidade controlada devem permanecer funcionalmente coerentes.",
+          "scope": "scope:automobile-concept"
+        }
+      ],
+      "filters": [
+        {
+          "filter_id": "filter:automobile-membership",
+          "constraint_id": "constraint:automobile-coherence",
+          "manifestation_id": "manifestation:automobile-members",
+          "excluded_cost_id": "cost:automobile-incoherence",
+          "selection_justification": "Seleciona membros que sustentam conjuntamente a função automóvel proposta."
+        }
+      ],
+      "excluded_costs": [
+        {
+          "cost_id": "cost:automobile-incoherence",
+          "description": "Perda da função coerente de mobilidade.",
+          "excluded_alternatives": [
+            "agregados de componentes sem coordenação funcional"
+          ]
+        }
+      ],
+      "groundings": [],
+      "advisory_model_closed": true
+    },
+    "epistemic_graph": {
+      "analysis_id": "analysis:automobile-concept-validation",
+      "object_ref": "concept:automobile@1",
+      "scope": "scope:automobile-concept",
+      "claims": [
+        {
+          "claim_id": "claim:automobile-concept-fit",
+          "content": "Os cristais committed instanciam o conceito funcional de automóvel neste âmbito.",
+          "subject_ref": "concept:automobile@1",
+          "owner_ref": "owner:diamond-analysis",
+          "scope": "scope:automobile-concept",
+          "claim_mode": "DERIVATION",
+          "evidence_ids": [
+            "evidence:automobile-concept-premise"
+          ],
+          "premise_refs": [
+            "document:automobile-system:p1",
+            "document:automobile-system:p2"
+          ],
+          "applied_constraints": [
+            "constraint:automobile-coherence"
+          ],
+          "derivation_direction": "cristais committed -> relação constitutiva -> conceito delimitado",
+          "test_criterion": null,
+          "horizon": null,
+          "assumptions": [],
+          "counterexample_searches": []
+        }
+      ],
+      "evidence_events": [
+        {
+          "evidence_id": "evidence:automobile-concept-premise",
+          "claim_id": "claim:automobile-concept-fit",
+          "evidence_kind": "PREMISE",
+          "stance": "SUPPORTS",
+          "source_actor": "source:document",
+          "source_locator": "document:automobile-system:p1",
+          "source_lineage": "document:automobile-system",
+          "context_id": "concept:automobile@1",
+          "method": "derivação conceptual delimitada",
+          "observed_at": "2026-07-26T12:00:00+00:00",
+          "scope": "scope:automobile-concept"
+        }
+      ]
+    }
+  }
+}

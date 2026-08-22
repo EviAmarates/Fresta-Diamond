@@ -1,0 +1,98 @@
+{
+  "schema": "fresta://diamond-frankenstein-comparison@2",
+  "case_id": "automobile-attestation",
+  "fixture_sha256": "8b68b289b5b77a782573d29b2a04456ce00cfa2f956ffff65e799e27978aa49d",
+  "diamond": {
+    "technical_completed": true,
+    "persisted_cards": 1,
+    "candidate_outcomes": [
+      {
+        "source_element_id": "claim:automobile-energy",
+        "disposition": "PROVISIONAL",
+        "crystal_state": "PROVISIONAL",
+        "claim_mode": "ATTESTATION",
+        "reason_codes": [
+          "ATTESTATION_BURDEN_SATISFIED"
+        ],
+        "negative_boundary": null
+      }
+    ],
+    "document_identity_boundary_preserved": true,
+    "replay_model_calls": 1
+  },
+  "frankenstein": {
+    "technical_completed": true,
+    "cards_saved": 1,
+    "candidate_decisions": [
+      {
+        "content": "Um automóvel transforma energia em movimento.",
+        "disposition": "INDETERMINATE",
+        "status": "stored",
+        "write_action": "created",
+        "owner": "document",
+        "subject": "external_entity",
+        "epistemic_state": "DEFERRED",
+        "reason_codes": [],
+        "phi": [
+          "document_claim_not_directly_confirmed"
+        ]
+      }
+    ],
+    "persisted_cards": [
+      {
+        "content": "Um automóvel transforma energia em movimento.",
+        "owner": "document",
+        "source_family": "document",
+        "memory_type": "CONCEPT",
+        "claim_mode": "ATTESTATION",
+        "structural_state": "ADMISSIBLE",
+        "epistemic_state": "DEFERRED",
+        "lifecycle_state": "ACTIVE"
+      }
+    ],
+    "document_identity_boundary_preserved": true,
+    "replay_extraction_calls": 1
+  },
+  "comparison": {
+    "both_technically_completed": true,
+    "both_preserve_document_identity_boundary": true,
+    "diamond_dispositions": [
+      "PROVISIONAL"
+    ],
+    "frankenstein_dispositions": [
+      "INDETERMINATE"
+    ],
+    "disposition_agreement": false,
+    "persistence_count_agreement": true
+  },
+  "run_id": "20260726T220401.178332Z-automobile-attestation-349c2095",
+  "created_at": "2026-07-26T22:04:01.178914+00:00",
+  "baseline_id": "cross-replay-v2",
+  "matches_baseline": true,
+  "differences": [],
+  "projection": {
+    "both_technically_completed": true,
+    "both_preserve_document_identity_boundary": true,
+    "diamond_dispositions": [
+      "PROVISIONAL"
+    ],
+    "frankenstein_dispositions": [
+      "INDETERMINATE"
+    ],
+    "disposition_agreement": false,
+    "diamond_phi_minus_justified": [
+      false
+    ],
+    "frankenstein_epistemic_states": [
+      "DEFERRED"
+    ],
+    "frankenstein_owners": [
+      "document"
+    ],
+    "frankenstein_subjects": [
+      "external_entity"
+    ],
+    "frankenstein_cards_saved": 1,
+    "diamond_persisted_cards": 1
+  }
+}

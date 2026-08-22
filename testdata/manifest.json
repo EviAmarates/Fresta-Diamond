@@ -1,0 +1,48 @@
+{
+  "schema": "fresta://diamond-benchmark-manifest@1",
+  "suite_id": "diamond-learn-regression",
+  "version": 1,
+  "baseline_id": "learn-replay-v8",
+  "cases": [
+    {
+      "case_id": "automobile-attestation",
+      "fixture": "fixtures/automobile-attestation.json",
+      "sha256": "8b68b289b5b77a782573d29b2a04456ce00cfa2f956ffff65e799e27978aa49d"
+    },
+    {
+      "case_id": "fictional-character-boundary",
+      "fixture": "fixtures/fictional-character-boundary.json",
+      "sha256": "e9171eb6509b189d38057c77c8982dc2fbb46c9a6d5e0f761ec2f040ba3dc627"
+    },
+    {
+      "case_id": "invented-provenance",
+      "fixture": "fixtures/invented-provenance.json",
+      "sha256": "3709fb28fc1807725db5c66d13fc010644735ce99eeb10c663a14968ca15e3c3"
+    },
+    {
+      "case_id": "contradictory-order-role",
+      "fixture": "fixtures/contradictory-order-role.json",
+      "sha256": "a1cda03a088b15e1acbd501a91b0ef0daed4b5f00f1e414c16802388d10cd927"
+    },
+    {
+      "case_id": "automobile-concept-candidate",
+      "fixture": "fixtures/automobile-concept-candidate.json",
+      "sha256": "6eeab9d7d73b6e7faa880928d58ec8fe64fc714df4b18836f9777e1c4a9ebe53"
+    },
+    {
+      "case_id": "automobile-concept-validation",
+      "fixture": "fixtures/automobile-concept-validation.json",
+      "sha256": "23d0ebe2f6d687a255c72e7ce6a7c6299f3cfcfce1375a31a7753d092f8320bb"
+    },
+    {
+      "case_id": "automobile-concept-research",
+      "fixture": "fixtures/automobile-concept-research.json",
+      "sha256": "daaeb305f1f3779dda3f60d8ba2fc10b30c56f267cf8c8a9abde5c503bbc3803"
+    },
+    {
+      "case_id": "automobile-concept-integration",
+      "fixture": "fixtures/automobile-concept-integration.json",
+      "sha256": "45dd15cfaa24c77c267092c221758f1bf5d230d89a933d58766d4dd6db341acd"
+    }
+  ]
+}
