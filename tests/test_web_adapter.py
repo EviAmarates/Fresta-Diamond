@@ -81,8 +81,8 @@ def test_web_adapter_serves_local_ui() -> None:
         assert "Fresta Diamond" in body
         assert "/command" in body
         assert "/investigate" in body
-        assert "Source provenance" in body
-        assert "Phi remains open" in body
+        assert "Sources &amp; provenance" in body
+        assert "Φ is open" in body
         assert "Analysis" in body
     finally:
         server.shutdown()

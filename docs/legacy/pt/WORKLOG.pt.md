@@ -1419,3 +1419,15 @@ sem ultrapassar os budgets e grants declarados.
 - Smoke live: autenticação e percurso Web responderam; com `openai/gpt-oss-20b`,
   o estado seguro foi `INCOMPLETE` quando a pesquisa não produziu fontes,
   mantendo Φ aberto. **427 testes passaram.**
+
+## 2026-09-03 — UI Web simples e launcher local
+
+- A superfície Web ganhou uma UI escura, responsiva e deliberadamente pequena:
+  pergunta central, modo conversa/análise, estado, resposta, fontes, remainders,
+  checkpoint e detalhe técnico.
+- A apresentação usa nós DOM e `textContent` para manter conteúdo externo como
+  dados, sem transformar títulos, URLs ou respostas em HTML executável.
+- `start_fresta_web.bat` inicia um root dedicado, usa `openai/gpt-oss-20b` por
+  defeito, permite overrides por ambiente e abre o browser automaticamente.
+- A autoridade continua no serviço Diamond; a UI apenas apresenta o percurso e
+  nunca fecha Φ.

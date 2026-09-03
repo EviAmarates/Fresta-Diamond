@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import sys
+import webbrowser
 
 
 DIAMOND_ROOT = Path(__file__).resolve().parent
@@ -36,6 +37,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--attention-tokens", type=int, default=7_000)
     parser.add_argument("--response-tokens", type=int, default=2_000)
     parser.add_argument("--repair-attempts", type=int, choices=range(0, 4), default=1)
+    parser.add_argument(
+        "--open-browser",
+        action="store_true",
+        help="Open the local Web UI in the default browser after binding the port.",
+    )
     return parser.parse_args(argv)
 
 
@@ -59,6 +65,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Fresta Diamond Web: http://{args.host}:{server.server_port}/")
     print(f"Transport token: {server.auth_token}")
     print("Press Ctrl+C to stop.")
+    if args.open_browser:
+        webbrowser.open(f"http://{args.host}:{server.server_port}/")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

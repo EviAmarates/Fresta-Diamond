@@ -74,6 +74,16 @@ python run_web.py --data-root .\local-web-data `
   --base-url http://127.0.0.1:1234 --model qwen/qwen3-14b
 ```
 
+On Windows, `start_fresta_web.bat` starts the same loopback server and opens the
+UI automatically. It defaults to `openai/gpt-oss-20b`; override the local
+configuration for one launch when needed:
+
+```powershell
+$env:FRESTA_MODEL = "qwen/qwen3-14b"
+$env:FRESTA_LLM_URL = "http://127.0.0.1:1234"
+.\start_fresta_web.bat
+```
+
 Paste the ephemeral transport token printed by the process, then write a
 question in the investigation box. A result may be `COMPLETED`, `SUSPENDED`, or
 `INCOMPLETE`; inspect the returned sources, authority, remainders, and
