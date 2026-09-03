@@ -9,11 +9,19 @@ persists state outside the context window, and mediates effects through explicit
 grants.** The model may generate an interpretation or proposed action; Fresta
 decides what may be validated, persisted, executed, deferred, or rejected.
 
+In architectural terms, Fresta is a **hippocampal layer for LLMs**, understood
+functionally through second-order cybernetics: it consolidates and retrieves
+bounded contextual memory while observing and regulating its own filtering
+process, so an LLM can continue active observation across limited context
+windows. This describes the implemented memory and control role; it is not a
+biological or consciousness claim, and Fresta does not replace the model's
+semantic generation.
+
 Diamond rebuilds only the parts of the original Fresta prototype that can be
 given independent contracts and deterministic tests. Its intended final name is
 simply **Fresta Protocol**.
 
-**Latest verification:** 344 Diamond tests passed on 2026-08-19. The last
+**Latest verification:** 411 Diamond tests passed locally. The last
 recorded cross-system baseline passed 527 combined tests with the original
 prototype.
 
@@ -28,6 +36,21 @@ python -m pip install -e ".[dev]"
 python -m pytest -q
 python run_commands.py --data-root .\local-command-data --command "/help"
 ```
+
+For the local Web interface:
+
+```powershell
+python run_web.py --data-root .\local-web-data
+```
+
+Open the printed URL and paste the printed transport token. Write a question in
+the investigation box to run the bounded retrieval → research → `/learn` →
+attention path; the response includes source lineage, authority boundaries,
+remainders, and continuation state. Choose Conversation for a natural response
+or Analysis for separated observations, interpretations, and open questions;
+the choice changes presentation only, never authority. Advanced commands such as `/help`,
+`/chat start`, and `/brain analyze` remain available. The interface is
+loopback-only and uses the same persistent application as the command runner.
 
 For a persistent local session:
 
@@ -46,12 +69,25 @@ prototype's `data/` directory.
   Phi-minus preservation.
 - Objective-relative retrieval, concepts, attention contexts, cognitive sheets,
   checkpoints, sleep, and resume.
+- Shared objective-relative retrieval across task memory, active user profile,
+  and assistant personality namespaces, with independent retention boundaries.
+- Versioned meta/ontology memory for convergent analyses, with explicit
+  differentiation and Phi/F grounding.
 - A shared command service, headless runner, persistent REPL, and the first
   persistent chat path.
+- A local Web interface presented as a Jarvis-like research companion:
+  persistent, objective-relative assistance with explicit provenance and
+  authority boundaries. Its core rule is “Fresta does not invent; it
+  investigates”: it is not an oracle or autonomous decision-maker.
 - Constitutional firewall attestation and brokered effects with explicit grants.
+- Deterministic question-only benchmark contract with bounded continuation,
+  injectable adapters, and isolated baseline comparison.
 
-The Web, Workspace Agent, document-scale learning, `/brain analyze`, profile
-stores, and production hardening are not implemented yet. See
+The Web adapter is a local loopback-only interface with an explicit ephemeral
+transport token; there is no production Web server or user authentication. The Workspace Agent is not
+implemented, and production hardening remains incomplete. Bounded document
+learning, `/brain analyze`, and versioned profile stores are available within
+their documented limits. See
 [Status](docs/STATUS.md) for the exact boundary.
 
 ## Why Fresta
@@ -82,8 +118,8 @@ perform ungranted external effects.
 
 ## Detailed implementation status
 
-Profile and assistant-personality contracts have focused coverage; their
-persistent stores remain unfinished.
+Profile and assistant-personality contracts have focused coverage, versioned
+stores, inspection, and explicit Gatekeeper-controlled adoption.
 
 | Area | State |
 |---|---|
@@ -93,10 +129,12 @@ persistent stores remain unfinished.
 | Concepts, evidence, validation, bounded research handoff | Implemented |
 | Attention contexts, cognitive sheets, checkpoint/resume | Implemented with bounded scope |
 | Shared command service, command runner, persistent REPL | Implemented |
-| Persistent chat spine | Implemented; reflection and profiles are WIP |
-| User profile and assistant personality | Contracts implemented; stores are WIP |
-| `/brain analyze` and document-scale learning | Planned |
-| Web and Workspace Agent interfaces | Planned |
+| Persistent chat spine | Implemented; reflection and profiles bounded |
+| User profile and assistant personality | Versioned stores and controlled adoption |
+| `/brain analyze` and document-scale learning | Bounded implementation; convergence WIP |
+| Loopback Web adapter | Direct bounded investigation plus advanced commands |
+| Question-only benchmark contract | Implemented; live HTTP adapter WIP |
+| Workspace Agent interface | Planned |
 
 See [the current status](docs/STATUS.md) for limits and the next milestones.
 
@@ -139,6 +177,7 @@ Useful examples include:
 
 ```text
 /help
+/research "Why did the Roman Empire change?"
 /learn A car converts energy into controlled motion.
 /attention create Review the current learning state.
 /workspace create Draft a bounded research note.
@@ -199,18 +238,18 @@ regression laboratory, and optional migration source.
 
 ## Near-term roadmap
 
-1. Add versioned stores, Gatekeepers, and inspection for user profiles and
-   assistant-personality heuristics.
-2. Complete per-turn chat retrieval, resume synchronization, and conditional
-   reflection.
-3. Implement `/brain analyze` as an immutable diagnostic/reporting path;
-   applying changes remains separately authorized and reversible.
-4. Add document-scale `/learn` with bounded batches, checkpoints, sleep, and
-   explicit convergence criteria.
-5. Publish a connection map, then build a thin Web adapter over the same command
-   service.
-6. Add an authorized Workspace Agent mode for project-scoped reads, patches,
-   tests, diffs, and resumable work.
+1. Define document-learning convergence as bounded operational completion:
+   every planned leaf is processed or remains an explicit typed remainder;
+   this never claims epistemic truth or closes Phi.
+2. Define Web authentication, deployment, and lifecycle policy before exposing
+   the adapter beyond loopback, using the published
+   [connection map](docs/CONNECTION-MAP.md).
+3. Expand adversarial firewall, Phi-minus, source-diversity, conflict, and
+   revalidation coverage.
+4. Add retention, encryption, multiprocess locking, cancellation, and stronger
+   module isolation.
+5. Add an authorized Workspace Agent mode for project-scoped reads, patches,
+   tests, diffs, and resumable work, using the existing controller boundaries.
 
 ## Contributing and security
 

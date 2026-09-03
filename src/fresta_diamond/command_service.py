@@ -10,7 +10,7 @@ from typing import Any
 import shlex
 from uuid import uuid4
 
-from fresta_diamond.application import DiamondApplication
+from fresta_diamond.application import CHAT_RESPONSE_MODES, DiamondApplication
 from fresta_diamond.attention_memory import AttentionContextRevision
 from fresta_diamond.cognitive_workspace import (
     SheetElementKind,
@@ -21,6 +21,7 @@ from fresta_diamond.concepts import (
     ConceptState,
     encode_concept_record,
 )
+from fresta_diamond.concept_research import decode_source_units
 from fresta_diamond.concept_nomination import ConceptNomination
 from fresta_diamond.concept_validation import encode_concept_validation_report
 from fresta_diamond.module_design import ModuleSuggestion
@@ -30,6 +31,7 @@ from fresta_diamond.chat import (
     encode_chat_message,
     encode_chat_session,
 )
+from fresta_diamond.brain_analysis import encode_brain_analysis
 
 
 COMMAND_INVOCATION_AUTHORITY = "COMMAND_INVOCATION_ONLY"
@@ -230,6 +232,18 @@ class DiamondCommandService:
         )
         self.registry.register(
             CommandSpec(
+                "research",
+                "Investigate one question through objective-relative retrieval and bounded Web research.",
+                "/research [--scope SCOPE] [--mode conversation|analysis] "
+                "[--queries N] [--results N] QUESTION",
+                aliases=("investigate",),
+                may_call_model=True,
+            ),
+            self._research,
+            line_parser=_parse_research,
+        )
+        self.registry.register(
+            CommandSpec(
                 "chat.start",
                 "Start persistent objective-relative chat attention.",
                 "/chat start [--scope SCOPE] [--summary TEXT] [--budget N] "
@@ -244,7 +258,8 @@ class DiamondCommandService:
             CommandSpec(
                 "chat.say",
                 "Persist one user message and run a bounded attention response.",
-                "/chat say [--budget N] SESSION_ID MESSAGE",
+                "/chat say [--budget N] [--mode conversation|analysis] "
+                "SESSION_ID MESSAGE",
                 aliases=("chat-say",),
                 may_call_model=True,
             ),
@@ -260,6 +275,36 @@ class DiamondCommandService:
             ),
             self._chat_status,
             line_parser=_parse_chat_status,
+        )
+        self.registry.register(
+            CommandSpec(
+                "chat.archive",
+                "Archive a chat without deleting its sealed history.",
+                "/chat archive SESSION_ID REASON",
+                aliases=("chat-archive",),
+            ),
+            self._chat_archive,
+            line_parser=_parse_chat_lifecycle,
+        )
+        self.registry.register(
+            CommandSpec(
+                "chat.abandon",
+                "Abandon a chat without deleting its sealed history.",
+                "/chat abandon SESSION_ID REASON",
+                aliases=("chat-abandon",),
+            ),
+            self._chat_abandon,
+            line_parser=_parse_chat_lifecycle,
+        )
+        self.registry.register(
+            CommandSpec(
+                "chat.resume",
+                "Resume chat attention and return the exact transcript head.",
+                "/chat resume SESSION_ID CHECKPOINT_ID [SUMMARY]",
+                aliases=("chat-resume",),
+            ),
+            self._chat_resume,
+            line_parser=_parse_chat_resume,
         )
         self.registry.register(
             CommandSpec(
@@ -439,6 +484,63 @@ class DiamondCommandService:
             self._module_inspect,
             line_parser=_parse_module_inspect,
         )
+        self.registry.register(
+            CommandSpec(
+                "profile.inspect",
+                "Audit user-profile proposal and adoption lineage without mutation.",
+                "/profile inspect [CLAIM_ID]",
+                aliases=("profile-inspect",),
+            ),
+            self._profile_inspect,
+            line_parser=_parse_profile_inspect,
+        )
+        self.registry.register(
+            CommandSpec(
+                "personality.inspect",
+                "Audit assistant-personality proposal and adoption lineage without mutation.",
+                "/personality inspect [TRAIT_ID]",
+                aliases=("personality-inspect",),
+            ),
+            self._personality_inspect,
+            line_parser=_parse_personality_inspect,
+        )
+        self.registry.register(
+            CommandSpec(
+                "brain.analyze",
+                "Create an immutable deterministic inventory and bounded diagnosis.",
+                "/brain analyze",
+            ),
+            self._brain_analyze,
+        )
+        self.registry.register(
+            CommandSpec(
+                "document.checkpoints",
+                "List durable document-learning cursors without mutation.",
+                "/document checkpoints",
+            ),
+            self._document_checkpoints,
+        )
+        self.registry.register(
+            CommandSpec(
+                "document.checkpoint",
+                "Inspect one durable document-learning cursor.",
+                "/document checkpoint CHECKPOINT_ID",
+                aliases=("document-checkpoint",),
+            ),
+            self._document_checkpoint,
+            line_parser=_parse_document_checkpoint,
+        )
+        self.registry.register(
+            CommandSpec(
+                "document.resume",
+                "Resume pending document-learning leaves through the normal pipeline.",
+                "/document resume CHECKPOINT_ID [--max-leaves N]",
+                aliases=("document-resume",),
+                may_call_model=True,
+            ),
+            self._document_resume,
+            line_parser=_parse_document_resume,
+        )
 
     def _help(self, invocation: CommandInvocation) -> CommandResult:
         commands = tuple(
@@ -491,6 +593,104 @@ class DiamondCommandService:
             f"Learn committed {len(crystals)} crystal candidate(s).",
             payload,
             model_call_count=outcome.model_call_count,
+        )
+
+    def _research(self, invocation: CommandInvocation) -> CommandResult:
+        args = invocation.arguments
+        objective = _required_text(args, "question")
+        scope = _optional_text(args, "scope", "scope:diamond-web")
+        max_queries = _bounded_integer(args, "max_queries", default=2, maximum=6)
+        max_results = _bounded_integer(
+            args,
+            "max_results_per_query",
+            default=2,
+            maximum=10,
+        )
+        response_mode = _optional_text(args, "response_mode", "conversation")
+        if response_mode not in CHAT_RESPONSE_MODES:
+            raise CommandError(
+                "Response mode must be 'conversation' or 'analysis'"
+            )
+        research = self.application.research_objective(
+            objective=objective,
+            scope=scope,
+            search_adapter=self._concept_search_adapter,
+            max_queries=max_queries,
+            max_results_per_query=max_results,
+        )
+        payload = _research_payload(research, objective, response_mode)
+        model_calls = research.model_call_count
+        if not payload["sources"]:
+            return self._result(
+                invocation,
+                "Investigation stopped before external evidence was produced; "
+                "no source-grounded response was generated.",
+                payload,
+                state=CommandState.INCOMPLETE,
+                model_call_count=model_calls,
+            )
+
+        started = self.application.start_chat(
+            scope=scope,
+            objective=objective,
+            summary="Continue the bounded investigation without closing Phi.",
+        )
+        model_calls += started.model_call_count
+        if started.session is None or started.context is None:
+            payload["chat"] = None
+            return self._result(
+                invocation,
+                "Investigation produced evidence, but objective-relative attention "
+                "did not produce a chat context.",
+                payload,
+                state=CommandState.INCOMPLETE,
+                model_call_count=model_calls,
+            )
+
+        turn = self.application.chat_turn(
+            started.session.session_id,
+            objective,
+            response_mode=response_mode,
+        )
+        model_calls += turn.model_call_count
+        checkpoint_id = (
+            turn.attention.continuation.checkpoint_id
+            if turn.attention.continuation is not None
+            else None
+        )
+        state = (
+            CommandState.SUSPENDED
+            if turn.attention.sleep_revision is not None
+            else (
+                CommandState.COMPLETED
+                if turn.assistant_message is not None
+                else CommandState.INCOMPLETE
+            )
+        )
+        payload["chat"] = {
+            "session": encode_chat_session(turn.session),
+            "user_message": encode_chat_message(turn.user_message),
+            "assistant_message": (
+                encode_chat_message(turn.assistant_message)
+                if turn.assistant_message is not None
+                else None
+            ),
+            "context": _context_payload(turn.context),
+            "transcript_revision": turn.transcript.revision_number,
+            "execution_state": turn.attention.result.execution.state.value,
+            "remainders": _execution_remainders(turn.attention.result),
+        }
+        return self._result(
+            invocation,
+            (
+                "Investigation completed with an open, source-grounded response."
+                if state is CommandState.COMPLETED
+                else "Investigation is bounded and can continue from its checkpoint."
+            ),
+            payload,
+            state=state,
+            model_call_count=model_calls,
+            continuation_checkpoint_id=checkpoint_id,
         )
 
     def _chat_start(self, invocation: CommandInvocation) -> CommandResult:
@@ -546,10 +746,20 @@ class DiamondCommandService:
         token_budget = args.get("token_budget")
         if token_budget is not None:
             token_budget = _minimum_integer(args, "token_budget", minimum=32)
+        response_mode = _optional_text(
+            args,
+            "response_mode",
+            "conversation",
+        )
+        if response_mode not in CHAT_RESPONSE_MODES:
+            raise CommandError(
+                "Response mode must be 'conversation' or 'analysis'"
+            )
         outcome = self.application.chat_turn(
             _required_text(args, "session_id"),
             _required_text(args, "message"),
             token_budget=token_budget,
+            response_mode=response_mode,
         )
         checkpoint_id = (
             outcome.attention.continuation.checkpoint_id
@@ -610,6 +820,48 @@ class DiamondCommandService:
                 if context.state.value == "SUSPENDED"
                 else CommandState.COMPLETED
             ),
+        )
+
+    def _chat_archive(self, invocation: CommandInvocation) -> CommandResult:
+        return self._close_chat(invocation, archive=True)
+
+    def _chat_abandon(self, invocation: CommandInvocation) -> CommandResult:
+        return self._close_chat(invocation, archive=False)
+
+    def _close_chat(
+        self,
+        invocation: CommandInvocation,
+        *,
+        archive: bool,
+    ) -> CommandResult:
+        args = invocation.arguments
+        session_id = _required_text(args, "session_id")
+        reason = _required_text(args, "reason")
+        session = (
+            self.application.archive_chat(session_id, reason=reason)
+            if archive
+            else self.application.abandon_chat(session_id, reason=reason)
+        )
+        return self._result(
+            invocation,
+            f"Chat session {session.state.value.lower()}.",
+            {"session": encode_chat_session(session)},
+        )
+
+    def _chat_resume(self, invocation: CommandInvocation) -> CommandResult:
+        args = invocation.arguments
+        context, transcript = self.application.resume_chat(
+            _required_text(args, "session_id"),
+            _required_text(args, "checkpoint_id"),
+            summary=args.get("summary"),
+        )
+        return self._result(
+            invocation,
+            "Chat attention resumed with the current transcript head.",
+            {
+                "context": _context_payload(context),
+                "transcript": encode_sheet_revision(transcript),
+            },
         )
 
     def _chat_list(self, invocation: CommandInvocation) -> CommandResult:
@@ -1003,6 +1255,83 @@ class DiamondCommandService:
             },
         )
 
+    def _profile_inspect(self, invocation: CommandInvocation) -> CommandResult:
+        claim_id = invocation.arguments.get("claim_id")
+        if claim_id is not None:
+            claim_id = _required_text(invocation.arguments, "claim_id")
+        reports = self.application.inspect_user_profiles(claim_id)
+        return self._result(
+            invocation,
+            f"Inspected {len(reports)} user-profile record(s).",
+            {"records": tuple(_profile_inspection_payload(item) for item in reports)},
+        )
+
+    def _personality_inspect(self, invocation: CommandInvocation) -> CommandResult:
+        trait_id = invocation.arguments.get("trait_id")
+        if trait_id is not None:
+            trait_id = _required_text(invocation.arguments, "trait_id")
+        reports = self.application.inspect_assistant_personality(trait_id)
+        return self._result(
+            invocation,
+            f"Inspected {len(reports)} assistant-personality record(s).",
+            {"records": tuple(_profile_inspection_payload(item) for item in reports)},
+        )
+
+    def _brain_analyze(self, invocation: CommandInvocation) -> CommandResult:
+        report = self.application.brain_analyze()
+        return self._result(
+            invocation,
+            "Immutable brain analysis report created.",
+            encode_brain_analysis(report),
+        )
+
+    def _document_checkpoints(self, invocation: CommandInvocation) -> CommandResult:
+        values = self.application.document_learning_checkpoints()
+        return self._result(
+            invocation,
+            f"Listed {len(values)} document-learning checkpoint(s).",
+            {"checkpoints": tuple(_document_checkpoint_payload(item) for item in values)},
+        )
+
+    def _document_checkpoint(self, invocation: CommandInvocation) -> CommandResult:
+        checkpoint = self.application.document_learning_checkpoint(
+            _required_text(invocation.arguments, "checkpoint_id")
+        )
+        return self._result(
+            invocation,
+            "Document-learning checkpoint verified.",
+            {"checkpoint": _document_checkpoint_payload(checkpoint)},
+        )
+
+    def _document_resume(self, invocation: CommandInvocation) -> CommandResult:
+        checkpoint_id = _required_text(invocation.arguments, "checkpoint_id")
+        args = dict(invocation.arguments)
+        args.setdefault("max_leaves", 1)
+        max_leaves = _minimum_integer(
+            args,
+            "max_leaves",
+            minimum=1,
+        )
+        decomposition = self.application.load_document_decomposition(checkpoint_id)
+        outcome = self.application.resume_document_learning(
+            checkpoint_id,
+            decomposition,
+            max_leaves=max_leaves,
+        )
+        return self._result(
+            invocation,
+            f"Resumed {len(outcome.outcomes)} document leaf batch item(s).",
+            {
+                "checkpoint": _document_checkpoint_payload(outcome.checkpoint),
+                "processed_leaf_refs": outcome.processed_leaf_refs,
+                "pending_leaf_refs": outcome.pending_leaf_refs,
+                "model_calls": sum(
+                    item.model_call_count for item in outcome.outcomes
+                ),
+            },
+            model_call_count=sum(item.model_call_count for item in outcome.outcomes),
+        )
+
     def _concept_list(self, invocation: CommandInvocation) -> CommandResult:
         args = invocation.arguments
         all_versions = args.get("all_versions", False)
@@ -1273,6 +1602,102 @@ def _context_payload(context: AttentionContextRevision) -> dict[str, Any]:
     }
 
 
+def _research_payload(
+    value: Any,
+    objective: str,
+    response_mode: str,
+) -> dict[str, Any]:
+    units = (
+        decode_source_units(value.source_artifact)
+        if value.source_artifact is not None
+        else ()
+    )
+    retrieval = value.retrieval
+    nomination = (
+        None
+        if retrieval is None or retrieval.nomination is None
+        else _nomination_payload(retrieval.nomination)
+    )
+    return {
+        "request_id": value.request.request_id,
+        "objective": objective,
+        "response_mode": response_mode,
+        "scope": value.request.scope,
+        "queries": tuple({
+            "query_id": item.query_id,
+            "text": item.text,
+            "purpose": item.purpose,
+            "preferred_source_types": item.preferred_source_types,
+            "intent": item.search_intent.value,
+        } for item in value.request.queries),
+        "execution_state": value.result.execution.state.value,
+        "remainders": _execution_remainders(value.result),
+        "retrieval": nomination,
+        "sources": tuple({
+            "source_unit_id": item.source_unit_id,
+            "query_id": item.query_id,
+            "title": item.title,
+            "source_locator": item.source_locator,
+            "source_type": item.source_type,
+            "retrieved_at": item.retrieved_at,
+            "content_hash": item.content_hash,
+            "authority": item.authority,
+            "source_document_ref": item.source_document_ref,
+            "extracted_unit_ref": item.extracted_unit_ref,
+            "source_lineage": item.source_lineage,
+        } for item in units),
+        "learning": tuple({
+            "commit_id": item.stored_commit.commit.commit_id,
+            "commit_hash": item.stored_commit.content_hash,
+            "crystal_states": tuple(
+                crystal.state.value
+                for crystal in item.stored_commit.commit.crystallization.crystals
+            ),
+        } for item in value.learned),
+        "authority": "UNVALIDATED_EXTERNAL_SOURCE_BUNDLE",
+        "phi_open": True,
+    }
+
+
+def _nomination_payload(value: Any) -> dict[str, Any]:
+    return {
+        "decision": value.decision.value,
+        "scope": value.scope,
+        "objective": value.objective,
+        "rationale": value.rationale,
+        "authority": value.authority,
+        "items": tuple({
+            "item_ref": item.item_ref,
+            "kind": item.kind,
+            "source_authority": item.source_authority,
+            "relevance": item.relevance,
+            "contextual_roles": item.contextual_roles,
+            "rationale": item.rationale,
+        } for item in value.items),
+    }
+
+
+def _profile_inspection_payload(value: Any) -> dict[str, Any]:
+    return {
+        "record_id": value.record_id,
+        "version_refs": value.version_refs,
+        "states": tuple(item.value for item in value.states),
+        "latest_version": value.latest_version,
+        "latest_state": value.latest_state.value,
+    }
+
+
+def _document_checkpoint_payload(value: Any) -> dict[str, Any]:
+    return {
+        "checkpoint_id": value.checkpoint_id,
+        "decomposition_id": value.decomposition_id,
+        "objective": value.objective,
+        "processed_leaf_refs": value.processed_leaf_refs,
+        "pending_leaf_refs": value.pending_leaf_refs,
+        "content_hash": value.content_hash,
+    }
+
+
 def _module_suggestion_payload(value: ModuleSuggestion) -> dict[str, Any]:
     operation = value.operation
     return {
@@ -1376,6 +1801,31 @@ def _parse_learn(tokens: tuple[str, ...]) -> Mapping[str, Any]:
     return {**options, "text": " ".join(positional)}
 
 
+def _parse_research(tokens: tuple[str, ...]) -> Mapping[str, Any]:
+    options, positional = _options(
+        tokens,
+        {"scope", "queries", "results", "mode"},
+    )
+    if not positional:
+        raise CommandError("/research requires a question")
+    result: dict[str, Any] = {
+        "question": " ".join(positional),
+        **({"scope": options["scope"]} if "scope" in options else {}),
+    }
+    if "mode" in options:
+        result["response_mode"] = options["mode"]
+    for option, argument in (
+        ("queries", "max_queries"),
+        ("results", "max_results_per_query"),
+    ):
+        if option in options:
+            try:
+                result[argument] = int(options[option])
+            except ValueError as exc:
+                raise CommandError(f"--{option} must be an integer") from exc
+    return result
+
+
 def _parse_chat_start(tokens: tuple[str, ...]) -> Mapping[str, Any]:
     options, positional = _options(
         tokens,
@@ -1403,7 +1853,7 @@ def _parse_chat_start(tokens: tuple[str, ...]) -> Mapping[str, Any]:
 
 
 def _parse_chat_say(tokens: tuple[str, ...]) -> Mapping[str, Any]:
-    options, positional = _options(tokens, {"budget"})
+    options, positional = _options(tokens, {"budget", "mode"})
     if len(positional) < 2:
         raise CommandError("/chat say requires SESSION_ID and MESSAGE")
     result: dict[str, Any] = {
@@ -1415,6 +1865,8 @@ def _parse_chat_say(tokens: tuple[str, ...]) -> Mapping[str, Any]:
             result["token_budget"] = int(options["budget"])
         except ValueError as exc:
             raise CommandError("--budget must be an integer") from exc
+    if "mode" in options:
+        result["response_mode"] = options["mode"]
     return result
 
 
@@ -1422,6 +1874,26 @@ def _parse_chat_status(tokens: tuple[str, ...]) -> Mapping[str, Any]:
     if len(tokens) != 1:
         raise CommandError("/chat status requires one SESSION_ID")
     return {"session_id": tokens[0]}
+
+
+def _parse_chat_lifecycle(tokens: tuple[str, ...]) -> Mapping[str, Any]:
+    if len(tokens) < 2:
+        raise CommandError("Chat lifecycle commands require SESSION_ID and REASON")
+    return {"session_id": tokens[0], "reason": " ".join(tokens[1:])}
+
+
+def _parse_chat_resume(tokens: tuple[str, ...]) -> Mapping[str, Any]:
+    if len(tokens) < 2:
+        raise CommandError(
+            "/chat resume requires SESSION_ID and CHECKPOINT_ID"
+        )
+    result: dict[str, Any] = {
+        "session_id": tokens[0],
+        "checkpoint_id": tokens[1],
+    }
+    if len(tokens) > 2:
+        result["summary"] = " ".join(tokens[2:])
+    return result
 
 
 def _parse_attention_create(tokens: tuple[str, ...]) -> Mapping[str, Any]:
@@ -1617,6 +2089,37 @@ def _parse_module_inspect(tokens: tuple[str, ...]) -> Mapping[str, Any]:
     if len(tokens) != 1:
         raise CommandError("/module inspect requires one SUGGESTION_ID")
     return {"suggestion_id": tokens[0]}
+
+
+def _parse_profile_inspect(tokens: tuple[str, ...]) -> Mapping[str, Any]:
+    if len(tokens) > 1:
+        raise CommandError("Profile inspection accepts at most one record ID")
+    return {"claim_id": tokens[0]} if tokens else {}
+
+
+def _parse_personality_inspect(tokens: tuple[str, ...]) -> Mapping[str, Any]:
+    if len(tokens) > 1:
+        raise CommandError("Personality inspection accepts at most one record ID")
+    return {"trait_id": tokens[0]} if tokens else {}
+
+
+def _parse_document_checkpoint(tokens: tuple[str, ...]) -> Mapping[str, Any]:
+    if len(tokens) != 1:
+        raise CommandError("/document checkpoint requires CHECKPOINT_ID")
+    return {"checkpoint_id": tokens[0]}
+
+
+def _parse_document_resume(tokens: tuple[str, ...]) -> Mapping[str, Any]:
+    options, positional = _options(tokens, {"max-leaves"})
+    if len(positional) != 1:
+        raise CommandError("/document resume requires CHECKPOINT_ID")
+    result: dict[str, Any] = {"checkpoint_id": positional[0]}
+    if "max-leaves" in options:
+        try:
+            result["max_leaves"] = int(options["max-leaves"])
+        except ValueError as exc:
+            raise CommandError("--max-leaves must be an integer") from exc
+    return result
 
 
 def _options(

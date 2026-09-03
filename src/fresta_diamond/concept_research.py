@@ -11,7 +11,7 @@ import json
 import re
 import ssl
 from typing import Any, Mapping
-from urllib.parse import urlencode, urlparse
+from urllib.parse import quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 from uuid import uuid4
 
@@ -31,8 +31,13 @@ from fresta_diamond.contracts import (
     Artifact,
     BlueprintSpec,
     CapabilityRequirement,
+    ExtractedUnit,
     ModuleManifest,
     OperationContract,
+    SearchIntent,
+    SourceDocument,
+    TypedProvenance,
+    decode_provenance,
 )
 from fresta_diamond.effects import ExecutionContext
 from fresta_diamond.registry import ModuleRegistry
@@ -82,6 +87,7 @@ class ConceptResearchQuery:
     purpose: str
     preferred_source_types: tuple[str, ...]
     reveals_candidate_label: bool = False
+    intent: SearchIntent | str | None = None
 
     def __post_init__(self) -> None:
         if not all((
@@ -92,6 +98,20 @@ class ConceptResearchQuery:
             raise ValueError("Concept research query fields are required")
         if not self.preferred_source_types:
             raise ValueError("Concept query requires source preferences")
+        intent = (
+            SearchIntent.LABEL_REVEALING
+            if self.reveals_candidate_label
+            else SearchIntent.NEUTRAL
+        ) if self.intent is None else SearchIntent(self.intent)
+        if self.reveals_candidate_label != (
+            intent is SearchIntent.LABEL_REVEALING
+        ):
+            raise ValueError("Search intent and label-disclosure marker disagree")
+        object.__setattr__(self, "intent", intent)
+
+    @property
+    def search_intent(self) -> SearchIntent:
+        return self.intent  # type: ignore[return-value]
 
 
 @dataclass(frozen=True)
@@ -138,6 +158,10 @@ class ConceptSourceUnit:
     retrieved_at: str
     content_hash: str
     authority: str = "UNVALIDATED_EXTERNAL_SOURCE"
+    source_document_ref: str | None = None
+    extracted_unit_ref: str | None = None
+    provenance: TypedProvenance | tuple[str, ...] = ()
+    source_lineage: str | None = None
 
     def __post_init__(self) -> None:
         if not all((
@@ -159,6 +183,53 @@ class ConceptSourceUnit:
         expected = sha256(self.content.encode("utf-8")).hexdigest()
         if self.content_hash != expected:
             raise ValueError("External source content hash mismatch")
+        document_ref = self.source_document_ref or self.source_locator
+        unit_ref = self.extracted_unit_ref or self.source_unit_id
+        if not document_ref.strip() or not unit_ref.strip():
+            raise ValueError("Source-unit lineage references are required")
+        object.__setattr__(self, "source_document_ref", document_ref)
+        object.__setattr__(self, "extracted_unit_ref", unit_ref)
+        provenance = decode_provenance(
+            self.provenance or (self.source_locator,)
+        )
+        if (
+            self.source_lineage is not None
+            and provenance.source_lineage is not None
+            and self.source_lineage != provenance.source_lineage
+        ):
+            raise ValueError("Source unit lineage does not match provenance")
+        lineage = self.source_lineage or provenance.source_lineage
+        if lineage is not None:
+            provenance = TypedProvenance(
+                provenance.refs, provenance.kind, source_lineage=lineage
+            )
+        object.__setattr__(self, "provenance", provenance)
+        object.__setattr__(self, "source_lineage", lineage)
+
+    @property
+    def source_document(self) -> SourceDocument:
+        return SourceDocument(
+            document_ref=self.source_document_ref or self.source_locator,
+            locator=self.source_locator,
+            content_hash=self.content_hash,
+            retrieved_at=self.retrieved_at,
+            provenance=self.provenance,
+            content=self.content,
+            source_lineage=self.source_lineage,
+        )
+
+    @property
+    def extracted_unit(self) -> ExtractedUnit:
+        return ExtractedUnit(
+            unit_ref=self.extracted_unit_ref or self.source_unit_id,
+            source_document_ref=(
+                self.source_document_ref or self.source_locator
+            ),
+            content_hash=self.content_hash,
+            content=self.content,
+            provenance=self.provenance,
+            source_lineage=self.source_lineage,
+        )
 
 
 def build_concept_research_request(
@@ -345,6 +416,8 @@ def research_request_artifact(request: ConceptResearchRequest) -> Artifact:
                         item.preferred_source_types
                     ),
                     "reveals_candidate_label": item.reveals_candidate_label,
+                    "intent": item.intent.value,
+                    "search_intent": item.intent.value,
                 }
                 for item in request.queries
             ],
@@ -372,7 +445,25 @@ def decode_source_units(artifact: Artifact) -> tuple[ConceptSourceUnit, ...]:
             source_type=_text(item, "source_type"),
             retrieved_at=_text(item, "retrieved_at"),
             content_hash=_text(item, "content_hash"),
-            authority=_text(item, "authority"),
+            authority=_text_or_default(
+                item, "authority", "UNVALIDATED_EXTERNAL_SOURCE"
+            ),
+            source_document_ref=(
+                _optional_text(item, "source_document_ref")
+                or _nested_ref(item, "source_document", "document_ref")
+                or _nested_ref(item, "source_document", "source_document_ref")
+            ),
+            extracted_unit_ref=(
+                _optional_text(item, "extracted_unit_ref")
+                or _nested_ref(item, "extracted_unit", "unit_ref")
+                or _nested_ref(item, "extracted_unit", "extracted_unit_ref")
+            ),
+            provenance=decode_provenance(item.get("provenance", ())),
+            source_lineage=(
+                _optional_text(item, "source_lineage")
+                or _nested_ref(item, "source_document", "source_lineage")
+                or _nested_ref(item, "extracted_unit", "source_lineage")
+            ),
         )
         for item in raw
         if isinstance(item, Mapping)
@@ -405,7 +496,7 @@ def stage_source_units(
                 kind=SheetElementKind.NOTE,
                 content=f"{item.title}\n\n{item.content}",
                 scope=_text(artifact.payload, "scope"),
-                provenance=(item.source_locator,),
+                provenance=item.provenance.refs,
             )
             for item in units
         ),
@@ -485,6 +576,184 @@ class WikipediaConceptSearchAdapter:
         return {"results": results}
 
 
+@dataclass(frozen=True)
+class AcademicLibrarySearchAdapter:
+    """Read-only OpenAlex/Crossref adapter; results remain unvalidated."""
+
+    timeout_seconds: float = 20.0
+    user_agent: str = "Fresta-Diamond/0.1 academic-research"
+
+    def __call__(
+        self,
+        grant: Any,
+        *,
+        queries: tuple[Mapping[str, Any], ...],
+        max_results_per_query: int,
+    ) -> Mapping[str, Any]:
+        if CONCEPT_SEARCH_PERMISSION not in grant.permissions:
+            raise PermissionError("Concept search permission was not granted")
+        results: list[dict[str, str]] = []
+        for query in queries:
+            query_id = _text(query, "query_id")
+            text = _text(query, "text")
+            preferences = tuple(query.get("preferred_source_types", ()))
+            if "ACADEMIC" not in preferences and "BIBLIOGRAPHIC" not in preferences:
+                if "OPEN_ACCESS" not in preferences and "HISTORICAL" not in preferences:
+                    continue
+            if "ACADEMIC" in preferences or "BIBLIOGRAPHIC" in preferences:
+                results.extend(self._openalex(query_id, text, max_results_per_query))
+                results.extend(self._crossref(query_id, text, max_results_per_query))
+            if "OPEN_ACCESS" in preferences or "ACADEMIC" in preferences:
+                results.extend(self._doaj(query_id, text, max_results_per_query))
+            if "PRIMARY_SOURCE" in preferences or "HISTORICAL" in preferences:
+                results.extend(self._archive(query_id, text, max_results_per_query))
+        return {"results": results}
+
+    def _openalex(
+        self, query_id: str, text: str, maximum: int
+    ) -> list[dict[str, str]]:
+        payload = self._get_json(
+            "https://api.openalex.org/works?" + urlencode({
+                "search": text,
+                "per-page": maximum,
+            })
+        )
+        rows = payload.get("results", []) if isinstance(payload, Mapping) else []
+        results = []
+        for row in rows[:maximum]:
+            if not isinstance(row, Mapping):
+                continue
+            title = row.get("title")
+            locator = row.get("doi") or row.get("id")
+            if not isinstance(title, str) or not isinstance(locator, str):
+                continue
+            results.append({
+                "query_id": query_id,
+                "title": title,
+                "snippet": title,
+                "url": locator,
+                "source_type": "ACADEMIC",
+                "source_lineage": "library:openalex",
+            })
+        return results
+
+    def _doaj(
+        self, query_id: str, text: str, maximum: int
+    ) -> list[dict[str, str]]:
+        payload = self._get_json(
+            "https://doaj.org/api/search/articles/" + quote(text, safe="")
+            + "?" + urlencode({"pageSize": maximum})
+        )
+        rows = payload.get("results", []) if isinstance(payload, Mapping) else []
+        results = []
+        for row in rows[:maximum]:
+            if not isinstance(row, Mapping):
+                continue
+            bibjson = row.get("bibjson")
+            if not isinstance(bibjson, Mapping):
+                continue
+            title = bibjson.get("title")
+            links = bibjson.get("link", [])
+            url = links[0].get("url") if isinstance(links, list) and links else None
+            if not isinstance(title, str) or not isinstance(url, str):
+                continue
+            results.append({
+                "query_id": query_id,
+                "title": title,
+                "snippet": title,
+                "url": url,
+                "source_type": "OPEN_ACCESS",
+                "source_lineage": "library:doaj",
+            })
+        return results
+
+    def _archive(
+        self, query_id: str, text: str, maximum: int
+    ) -> list[dict[str, str]]:
+        payload = self._get_json(
+            "https://archive.org/advancedsearch.php?" + urlencode({
+                "q": text,
+                "fl[]": ("identifier", "title", "description"),
+                "rows": maximum,
+                "output": "json",
+            })
+        )
+        docs = (
+            payload.get("response", {}).get("docs", [])
+            if isinstance(payload, Mapping)
+            else []
+        )
+        results = []
+        for row in docs[:maximum]:
+            if not isinstance(row, Mapping):
+                continue
+            identifier = row.get("identifier")
+            title = row.get("title")
+            description = row.get("description", title)
+            if (
+                not isinstance(identifier, str)
+                or not isinstance(title, str)
+                or not isinstance(description, str)
+            ):
+                continue
+            results.append({
+                "query_id": query_id,
+                "title": title,
+                "snippet": description[:4_000],
+                "url": f"https://archive.org/details/{identifier}",
+                "source_type": "HISTORICAL",
+                "source_lineage": "library:internet-archive",
+            })
+        return results
+
+    def _crossref(
+        self, query_id: str, text: str, maximum: int
+    ) -> list[dict[str, str]]:
+        payload = self._get_json(
+            "https://api.crossref.org/works?" + urlencode({
+                "query": text,
+                "rows": maximum,
+            })
+        )
+        rows = (
+            payload.get("message", {}).get("items", [])
+            if isinstance(payload, Mapping)
+            else []
+        )
+        results = []
+        for row in rows[:maximum]:
+            if not isinstance(row, Mapping):
+                continue
+            titles = row.get("title")
+            doi = row.get("DOI")
+            if not isinstance(titles, list) or not titles or not isinstance(doi, str):
+                continue
+            title = titles[0]
+            if not isinstance(title, str) or not title.strip():
+                continue
+            results.append({
+                "query_id": query_id,
+                "title": title,
+                "snippet": title,
+                "url": f"https://doi.org/{doi}",
+                "source_type": "BIBLIOGRAPHIC",
+                "source_lineage": "library:crossref",
+            })
+        return results
+
+    def _get_json(self, url: str) -> Mapping[str, Any]:
+        request = Request(url, headers={"User-Agent": self.user_agent})
+        with urlopen(
+            request,
+            timeout=self.timeout_seconds,
+            context=_verified_system_ssl_context(),
+        ) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        if not isinstance(payload, Mapping):
+            raise ValueError("Academic library returned a non-object response")
+        return payload
+
+
 def _execute_concept_research(
     inputs: Mapping[str, Mapping[str, Any]],
     context: ExecutionContext,
@@ -535,6 +804,20 @@ def _execute_concept_research(
         reveal = query.get("reveals_candidate_label")
         if not isinstance(reveal, bool):
             raise TypeError("Query label-disclosure marker must be boolean")
+        raw_intent = query.get(
+            "intent",
+            query.get(
+                "search_intent",
+                SearchIntent.LABEL_REVEALING.value
+                if reveal else SearchIntent.NEUTRAL.value,
+            ),
+        )
+        try:
+            intent = SearchIntent(raw_intent)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Research query intent is invalid") from exc
+        if reveal != (intent is SearchIntent.LABEL_REVEALING):
+            raise ValueError("Research query intent and disclosure disagree")
         if reveal:
             reveal_positions.append(index)
     if reveal_positions and reveal_positions != [len(raw_queries) - 1]:
@@ -599,6 +882,25 @@ def _execute_concept_research(
             "retrieved_at": retrieved_at,
             "content_hash": content_hash,
             "authority": "UNVALIDATED_EXTERNAL_SOURCE",
+            "source_document_ref": locator,
+            "extracted_unit_ref": source_unit_id,
+            "provenance": [locator],
+            "source_lineage": _optional_text(item, "source_lineage"),
+            "source_document": {
+                "document_ref": locator,
+                "locator": locator,
+                "content_hash": content_hash,
+                "retrieved_at": retrieved_at,
+                "provenance": [locator],
+                "source_lineage": _optional_text(item, "source_lineage"),
+            },
+            "extracted_unit": {
+                "unit_ref": source_unit_id,
+                "source_document_ref": locator,
+                "content_hash": content_hash,
+                "provenance": [locator],
+                "source_lineage": _optional_text(item, "source_lineage"),
+            },
         })
     return {
         "source_units": {
@@ -664,6 +966,37 @@ def _text(value: Mapping[str, Any], key: str) -> str:
     if not isinstance(item, str) or not item.strip():
         raise ValueError(f"{key} must be non-empty text")
     return " ".join(item.split())
+
+
+def _optional_text(value: Mapping[str, Any], key: str) -> str | None:
+    item = value.get(key)
+    if item is None:
+        return None
+    if not isinstance(item, str) or not item.strip():
+        raise ValueError(f"{key} must be non-empty text when supplied")
+    return " ".join(item.split())
+
+
+def _text_or_default(
+    value: Mapping[str, Any],
+    key: str,
+    default: str,
+) -> str:
+    item = value.get(key, default)
+    if not isinstance(item, str) or not item.strip():
+        raise ValueError(f"{key} must be non-empty text")
+    return " ".join(item.split())
+
+
+def _nested_ref(
+    value: Mapping[str, Any],
+    container: str,
+    key: str,
+) -> str | None:
+    nested = value.get(container)
+    if not isinstance(nested, Mapping):
+        return None
+    return _optional_text(nested, key)
 
 
 def _strip_html(value: str) -> str:

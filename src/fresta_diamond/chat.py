@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import sha256
@@ -24,6 +24,12 @@ class ChatRole(str, Enum):
     ASSISTANT = "ASSISTANT"
 
 
+class ChatState(str, Enum):
+    ACTIVE = "ACTIVE"
+    ARCHIVED = "ARCHIVED"
+    ABANDONED = "ABANDONED"
+
+
 @dataclass(frozen=True)
 class ChatSession:
     session_id: str
@@ -31,6 +37,8 @@ class ChatSession:
     transcript_sheet_id: str
     scope: str
     objective: str
+    state: ChatState = ChatState.ACTIVE
+    lifecycle_reason: str = "Chat session created."
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -43,7 +51,12 @@ class ChatSession:
             self.transcript_sheet_id,
         )):
             raise ValueError("Chat session references are invalid")
-        if not all((self.scope.strip(), self.objective.strip(), self.created_at.strip())):
+        if not all((
+            self.scope.strip(),
+            self.objective.strip(),
+            self.lifecycle_reason.strip(),
+            self.created_at.strip(),
+        )):
             raise ValueError("Chat session scope, objective, and time are required")
         if self.authority != "CHAT_COORDINATION_ONLY":
             raise PermissionError("Chat sessions cannot grant memory authority")
@@ -116,18 +129,16 @@ class AtomicChatStore:
                 raise ChatStoreError("Chat session already exists")
             payload = encode_chat_session(session)
             self._atomic_write(path, _sealed(payload))
+            self._append_lifecycle_unlocked(
+                session.session_id,
+                state=ChatState.ACTIVE,
+                reason="Chat session created.",
+            )
         return session
 
     def session(self, session_id: str) -> ChatSession:
         with self._lock:
-            path = self._directory(session_id) / "session.json"
-            if not path.exists():
-                raise ChatStoreError(f"Unknown chat session: {session_id}")
-            value = self._read_sealed(path)
-            session = decode_chat_session(value)
-            if session.session_id != session_id:
-                raise ChatStoreError("Chat session identity was altered")
-            return session
+            return self._session_unlocked(session_id)
 
     def sessions(self) -> tuple[ChatSession, ...]:
         if not self.root.exists():
@@ -136,10 +147,17 @@ class AtomicChatStore:
         for path in sorted(self.root.glob("*/session.json")):
             value = self._read_sealed(path)
             session = decode_chat_session(value)
+            session = self._with_latest_lifecycle_unlocked(session)
             if path != self._directory(session.session_id) / "session.json":
                 raise ChatStoreError("Chat session storage identity was altered")
             values.append(session)
         return tuple(sorted(values, key=lambda item: item.created_at))
+
+    def archive(self, session_id: str, *, reason: str) -> ChatSession:
+        return self._transition(session_id, ChatState.ARCHIVED, reason)
+
+    def abandon(self, session_id: str, *, reason: str) -> ChatSession:
+        return self._transition(session_id, ChatState.ABANDONED, reason)
 
     def append(
         self,
@@ -154,6 +172,8 @@ class AtomicChatStore:
             session_path = self._directory(session_id) / "session.json"
             if not session_path.exists():
                 raise ChatStoreError(f"Unknown chat session: {session_id}")
+            if self._session_unlocked(session_id).state is not ChatState.ACTIVE:
+                raise ChatStoreError("Chat session is not active")
             history = self._messages_unlocked(session_id)
             selected_id = message_id or f"chat-message:{uuid4()}"
             if any(item.message_id == selected_id for item, _hash in history):
@@ -218,6 +238,110 @@ class AtomicChatStore:
             raise ChatStoreError("Chat session ID is invalid")
         return self.root / sha256(session_id.encode("utf-8")).hexdigest()[:32]
 
+    def _session_unlocked(self, session_id: str) -> ChatSession:
+        path = self._directory(session_id) / "session.json"
+        if not path.exists():
+            raise ChatStoreError(f"Unknown chat session: {session_id}")
+        value = self._read_sealed(path)
+        session = decode_chat_session(value)
+        if session.session_id != session_id:
+            raise ChatStoreError("Chat session identity was altered")
+        return self._with_latest_lifecycle_unlocked(session)
+
+    def _with_latest_lifecycle_unlocked(self, session: ChatSession) -> ChatSession:
+        lifecycle = self._lifecycle_unlocked(session.session_id)
+        if lifecycle is None:
+            return session
+        state, reason = lifecycle
+        return replace(session, state=state, lifecycle_reason=reason)
+
+    def _transition(
+        self,
+        session_id: str,
+        state: ChatState,
+        reason: str,
+    ) -> ChatSession:
+        if not reason.strip():
+            raise ValueError("Chat lifecycle reason cannot be blank")
+        with self._lock:
+            current = self._session_unlocked(session_id)
+            if current.state is not ChatState.ACTIVE:
+                raise ChatStoreError("Chat session is already closed")
+            self._append_lifecycle_unlocked(session_id, state=state, reason=reason)
+            return replace(current, state=state, lifecycle_reason=reason)
+
+    def _append_lifecycle_unlocked(
+        self,
+        session_id: str,
+        *,
+        state: ChatState,
+        reason: str,
+    ) -> None:
+        directory = self._directory(session_id)
+        path = directory / "lifecycle.jsonl"
+        previous_hash = None
+        if path.exists():
+            records = self._read_lifecycle_unlocked(session_id)
+            previous_hash = records[-1][2] if records else None
+        body = {
+            "state": state.value,
+            "reason": reason,
+            "previous_hash": previous_hash,
+            "changed_at": datetime.now(timezone.utc).isoformat(),
+        }
+        content_hash = _digest(body)
+        directory.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8", newline="\n") as stream:
+            stream.write(json.dumps(
+                {**body, "content_hash": content_hash},
+                ensure_ascii=False,
+                sort_keys=True,
+            ) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+
+    def _lifecycle_unlocked(
+        self,
+        session_id: str,
+    ) -> tuple[ChatState, str] | None:
+        records = self._read_lifecycle_unlocked(session_id)
+        if not records:
+            return None
+        state, reason, _content_hash = records[-1]
+        return state, reason
+
+    def _read_lifecycle_unlocked(
+        self,
+        session_id: str,
+    ) -> tuple[tuple[ChatState, str, str], ...]:
+        path = self._directory(session_id) / "lifecycle.jsonl"
+        if not path.exists():
+            return ()
+        previous_hash = None
+        result = []
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+            for line in lines:
+                raw = json.loads(line)
+                content_hash = raw.pop("content_hash")
+                if content_hash != _digest(raw) or raw["previous_hash"] != previous_hash:
+                    raise ChatStoreError("Chat lifecycle chain verification failed")
+                state = ChatState(raw["state"])
+                reason = raw["reason"]
+                if not isinstance(reason, str) or not reason.strip():
+                    raise ValueError("Lifecycle reason is invalid")
+                result.append((state, reason, content_hash))
+                previous_hash = content_hash
+        except ChatStoreError:
+            raise
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError, OSError) as exc:
+            raise ChatStoreError("Malformed chat lifecycle history") from exc
+        if not result or result[0][0] is not ChatState.ACTIVE:
+            raise ChatStoreError("Chat lifecycle must begin ACTIVE")
+        if any(item[0] is ChatState.ACTIVE for item in result[1:]):
+            raise ChatStoreError("Chat lifecycle cannot reactivate a session")
+        return tuple(result)
+
     def _read_sealed(self, path: Path) -> dict[str, object]:
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
@@ -253,6 +377,8 @@ def encode_chat_session(value: ChatSession) -> dict[str, object]:
         "transcript_sheet_id": value.transcript_sheet_id,
         "scope": value.scope,
         "objective": value.objective,
+        "state": value.state.value,
+        "lifecycle_reason": value.lifecycle_reason,
         "created_at": value.created_at,
         "authority": value.authority,
     }
@@ -267,6 +393,11 @@ def decode_chat_session(value: dict[str, object]) -> ChatSession:
         transcript_sheet_id=_text(value, "transcript_sheet_id"),
         scope=_text(value, "scope"),
         objective=_text(value, "objective"),
+        state=ChatState(value.get("state", ChatState.ACTIVE.value)),
+        lifecycle_reason=_text(
+            value,
+            "lifecycle_reason",
+        ) if "lifecycle_reason" in value else "Chat session is active.",
         created_at=_text(value, "created_at"),
         authority=_text(value, "authority"),
     )

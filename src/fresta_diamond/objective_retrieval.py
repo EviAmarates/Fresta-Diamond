@@ -18,6 +18,8 @@ from fresta_diamond.contracts import (
     CapabilityRequirement,
     ModuleManifest,
     OperationContract,
+    TypedProvenance,
+    decode_provenance,
 )
 from fresta_diamond.effects import ExecutionContext
 from fresta_diamond.learning_memory import (
@@ -52,6 +54,13 @@ class ObjectiveRetrievalItem:
     relevance: float
     contextual_roles: tuple[int, ...]
     rationale: str
+    provenance: TypedProvenance = TypedProvenance()
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.provenance, TypedProvenance):
+            object.__setattr__(
+                self, "provenance", decode_provenance(self.provenance)
+            )
 
     def attention_nomination(self) -> AttentionNomination:
         return AttentionNomination(
@@ -188,6 +197,9 @@ def merge_objective_retrieval_nominations(
                     previous.contextual_roles + item.contextual_roles
                 ))),
                 rationale=" | ".join(reasons),
+                provenance=decode_provenance(
+                    previous.provenance.refs + item.provenance.refs
+                ),
             )
     items = tuple(by_ref[key] for key in sorted(by_ref))
     return ObjectiveRetrievalNomination(
@@ -256,6 +268,7 @@ def build_objective_retrieval_request(
             "content": crystal.content,
             "source_authority": f"LEARNING_MEMORY:{crystal.state.value}",
             "dependency_refs": [],
+            "provenance": list(crystal.provenance),
         })
     for concept in concept_store.latest_records():
         if concept.scope != scope or concept.state in {
@@ -271,6 +284,9 @@ def build_objective_retrieval_request(
             "dependency_refs": [
                 item.crystal_id for item in concept.memberships
             ],
+            "provenance": [
+                item.crystal_id for item in concept.memberships
+            ],
         })
     for revision in workspace.latest_revisions():
         scoped = tuple(item for item in revision.elements if item.scope == scope)
@@ -282,6 +298,9 @@ def build_objective_retrieval_request(
             "content": _workspace_descriptor(revision.title, scoped),
             "source_authority": "UNVALIDATED_WORKSPACE_PROPOSAL",
             "dependency_refs": [],
+            "provenance": [
+                ref for item in scoped for ref in item.provenance
+            ],
         })
     for observation in memory.negative_boundary():
         if observation.scope != scope:
@@ -295,6 +314,7 @@ def build_objective_retrieval_request(
             ),
             "source_authority": "PHI_MINUS_AUDIT_ONLY",
             "dependency_refs": [],
+            "provenance": list(observation.provenance),
         })
     candidates.sort(key=lambda item: (item["kind"], item["item_ref"]))
     refs = [item["item_ref"] for item in candidates]
@@ -331,6 +351,7 @@ def decode_objective_retrieval_nomination(
         relevance=_relevance(item.get("relevance")),
         contextual_roles=_roles(item.get("contextual_roles")),
         rationale=_text(item, "rationale"),
+        provenance=decode_provenance(item.get("provenance", ())),
     ) for item in raw_items)
     if decision is ObjectiveRetrievalDecision.SELECT and not items:
         raise ValueError("SELECT retrieval nomination requires items")
@@ -485,6 +506,7 @@ def _anchor_nomination(
             "relevance": _relevance(item.get("relevance")),
             "contextual_roles": list(_roles(item.get("contextual_roles"))),
             "rationale": _text(item, "rationale"),
+            "provenance": list(candidate.get("provenance", ())),
         })
     if decision is ObjectiveRetrievalDecision.SELECT and not anchored:
         raise ValueError("SELECT retrieval nomination requires items")
@@ -515,6 +537,7 @@ def _validate_request(request: Mapping[str, Any]) -> None:
         _text(candidate, "kind")
         _text(candidate, "content")
         _text(candidate, "source_authority")
+        decode_provenance(candidate.get("provenance", ()))
     if len(refs) != len(set(refs)):
         raise ValueError("Objective retrieval request contains duplicate references")
 

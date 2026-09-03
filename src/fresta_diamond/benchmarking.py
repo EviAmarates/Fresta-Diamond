@@ -401,11 +401,80 @@ def run_learning_benchmark(
             "pending_commits": len(memory.pending()),
             "promotion_authority": stored_commit.commit.promotion_authority,
         }
+        raw_concept = fixture.get("concept_proposal")
+        eligible_crystals = sum(
+            item.state.value in {"ACCEPTED", "PROVISIONAL"}
+            for item in committed_crystals
+        )
+        if (
+            not result.execution.closure.technical_completed
+            or (raw_concept is not None and eligible_crystals < 2)
+        ):
+            epistemic = result.execution.artifacts.get("epistemic_evidence")
+            events = (
+                epistemic.payload.get("evidence_events", ())
+                if epistemic is not None else ()
+            )
+            actors = sorted({
+                item.get("source_actor")
+                for item in events
+                if isinstance(item, Mapping)
+                and isinstance(item.get("source_actor"), str)
+            })
+            locators = sorted({
+                item.get("source_locator")
+                for item in events
+                if isinstance(item, Mapping)
+                and isinstance(item.get("source_locator"), str)
+            })
+            document_input = any(
+                item.startswith("document:") for item in locators
+            )
+            return {
+                "technical_completed": False,
+                "structural_closed": result.execution.closure.structural_closed,
+                "constitutional_closed": (
+                    result.execution.closure.constitutional_closed
+                ),
+                "epistemic_closed": result.execution.closure.epistemic_closed,
+                "remainder_kinds": sorted({
+                    item.kind.value for item in result.execution.remainders
+                }),
+                "crystals": [
+                    {
+                        "source_element_id": item.source_element_id,
+                        "state": item.state.value,
+                        "claim_mode": (
+                            item.claim_mode.value
+                            if item.claim_mode is not None else None
+                        ),
+                        "reason_codes": list(item.reason_codes),
+                    }
+                    for item in batch.crystals
+                ],
+                "evidence_source_actors": actors,
+                "evidence_source_locators": locators,
+                "document_identity_boundary_preserved": (
+                    not document_input or "source:user" not in actors
+                ),
+                "negative_boundary": [
+                    {
+                        "source_element_id": item.source_element_id,
+                        "disposition": item.disposition.value,
+                        "phi_minus_justified": item.phi_minus_justified,
+                        "reason_codes": list(item.reason_codes),
+                        "remainder_kinds": list(item.remainder_kinds),
+                        "promotion_authority": item.promotion_authority,
+                    }
+                    for item in negative_boundary
+                ],
+                "learning_memory": memory_projection,
+                "model_call_count": calls,
+            }
         concept_projection = None
         concept_validation_projection = None
         concept_research_projection = None
         concept_integration_projection = None
-        raw_concept = fixture.get("concept_proposal")
         if raw_concept is not None:
             if not isinstance(raw_concept, Mapping):
                 raise BenchmarkLabError("concept_proposal must be an object")

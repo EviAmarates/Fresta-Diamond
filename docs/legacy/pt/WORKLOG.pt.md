@@ -1,9 +1,191 @@
 # Diamond — worklog canónico
 
-Última consolidação: 2026-07-26.
+Última consolidação: 2026-09-03.
 
 Este documento acompanha exclusivamente o protótipo Diamond. O histórico anterior
 foi preservado em [`LEGACY-WORKLOG-EXTRACT.md`](LEGACY-WORKLOG-EXTRACT.md).
+
+## 2026-09-03 — Modos de resposta no percurso Web
+
+- Foi distinguida a forma de resposta da autoridade: `conversation` produz uma
+  resposta natural e `analysis` separa observações ancoradas, interpretações e
+  perguntas abertas.
+- O modo é apenas uma instrução bounded do turno de atenção; não altera
+  retrieval, proveniência, budgets, Firewall, Gatekeeper, EffectBroker ou o
+  estado aberto de Φ.
+- O chat persistente existente continua a ser a única superfície de conversa;
+  não foi criado um segundo chat. O selector do Web apenas escolhe o modo do
+  turno investigativo e da continuação.
+
+## 2026-09-03 — Primeiro percurso Web investigativo
+
+- A caixa principal do Web passou a aceitar uma pergunta normal directamente,
+  sem obrigar o utilizador a conhecer comandos slash.
+- A pergunta atravessa a mesma fronteira central: retrieval relativo ao
+  objectivo, plano/query bounded, pesquisa mediada, entrada normal em `/learn`,
+  atenção persistente e resposta com continuidade.
+- O novo comando `research`/`investigate` e o endpoint `POST /investigate`
+  reutilizam o `DiamondCommandService`; o adapter Web não cria autoridade
+  paralela nem promove fontes externas.
+- O payload expõe fontes, `source_lineage`, autoridade, estado de execução,
+  remainders, commits de aprendizagem, contexto de atenção e checkpoint quando
+  existe. A resposta marca explicitamente `phi_open`.
+- A experiência é dinâmica: o planner e o retrieval orientado pelas Três
+  Ordens escolhem o que falta investigar dentro dos budgets; conflitos,
+  alternativas e limites permanecem abertos.
+- O primeiro smoke determinístico confirmou o percurso pergunta → query →
+  fonte não validada → `/learn` → retrieval → atenção. O Web continua
+  loopback-only e de desenvolvimento, não é deployment de produção.
+- Verificação: **425 testes totais aprovados**.
+
+## 2026-09-03 — Escalação consultiva da firewall
+
+- A política de risco agora alimenta um serviço consultivo tipado no
+  controller/application: `DENY` é `GRAVE`, cria primeiro um checkpoint
+  imutável quando o store está disponível, depois regista a escalação e só
+  então prepara a meta-análise consultiva.
+- A meta-análise consultiva é persistida em `MetaMemoryStore` sem promover nem
+  fechar Φ; o relatório mantém Φ aberto e o flag de integração pendente torna
+  explícito o corte ainda não absorvido pelo controller.
+- `QUARANTINE` continua a ser apenas revisão normal: não cria checkpoint nem
+  pausa automática.
+- A trilha de journal/proveniência agora inclui checkpoint e escalação
+  consultivos, com arquivo JSONL selado quando disponível.
+- Verificação: **422 testes totais aprovados**.
+
+## 2026-09-03 — Bibliotecas externas não são autoridade
+
+- As fontes académicas devem ser tratadas como bibliotecas externas: devolvem
+  conhecimento tipado e matéria-prima com proveniência, não verdade nem pressão
+  para concluir.
+- Uma mini-lista inicial de fontes pode orientar o adapter, mas não deve ficar
+  embutida como autoridade permanente. Depois do primeiro corte, a escolha deve
+  ser derivada pelo objectivo e pela análise contextual O1/O2/O3.
+- Toda a entrada externa atravessa a Firewall, o Gatekeeper, o controller e o
+  `/learn`; a fonte pode ser rejeitada, mantida como hipótese, diferida ou
+  preservada em Φ−. Nenhum resultado de biblioteca pode fechar Φ.
+- A mini-lista funciona como heurística inicial, com a mesma dinâmica de
+  filtragem da Firewall: as bibliotecas podem fornecer sinais tipados de risco e
+  relevância, mas não podem escrever directamente em memória ou promover
+  conhecimento.
+- Padrões de exclusão/Φ− eventualmente comuns entre fontes devem ser
+  observações para meta-análise e convergência, nunca pressão local para
+  cristalizar, concluir ou fechar Φ.
+- Se a Firewall sinalizar um risco grave e a análise O1/O2/O3 o confirmar como
+  material para o objectivo, o controller deve criar primeiro um checkpoint
+  imutável e suspender a continuação normal.
+- Esse checkpoint abre uma meta-análise do episódio e dos padrões Φ−
+  relacionados. A meta-análise é consultiva e pode reordenar investigação,
+  filtros ou hipóteses; não promove memória, não transforma o alarme em
+  verdade e nunca fecha Φ.
+
+## 2026-09-03 — Runner question-only determinístico
+
+- Foi implementado um contrato mínimo e determinístico para benchmark
+  question-only: o Fresta persistente continua por episódios limitados e
+  regista checkpoint/continuação, enquanto o baseline isolado recebe a mesma
+  questão e os mesmos limites por chamada, sem persistência nem resume.
+- A evidência externa permanece sempre não validada e preserva proveniência;
+  o runner não invoca Φ-minus nem fecha Φ.
+- O contrato usa adapters injectáveis para a proposta de queries e para a
+  recolha de evidência, evitando dependência de HTTP vivo no milestone actual.
+
+## 2026-09-03 — Auditoria de capacidades e journal persistente
+
+- A auditoria confirmou que a facade `DiamondApplication` já compõe folhas,
+  `/learn`, memória, Φ−, retrieval por objectivo, checkpoints, resume,
+  conceitos e sugestões de módulos.
+- A criação dinâmica de módulos não será assumida no benchmark sem prova de
+  execução operacional; fica dependente da auditoria.
+- Detectado e corrigido o wiring ausente dos journals: a aplicação passou a
+  manter um `EventJournal` e `JsonlJournalArchive` persistentes, injectados em
+  todos os controllers internos.
+- O próximo corte é o protocolo question-only com pesquisa Web independente
+  do baseline e pesquisa + memória/retrieval/continuação no Fresta.
+- `docs/BENCHMARK-PROTOCOL.md` fixa a comparação closed-book/web-enabled,
+  custos e regras de justiça. Regista também o limite actual: o adapter local
+  ainda não expõe tool-calling Web genérico; o adaptador Wikipedia existente
+  está preso ao fluxo de gaps de conceitos.
+- Adicionado `DiamondApplication.research_objective()`: pesquisa bounded
+  mediada pelo controller/EffectBroker, com fontes não validadas a entrarem no
+  `/learn` normal.
+- Adicionado o provider `llm-objective-research`: a LLM propõe queries num
+  artefacto estruturado bounded, o controller valida o schema e só depois o
+  `EffectBroker` pode executar a pesquisa. O runner question-only completo
+  ainda não está concluído.
+- Criado `AcademicLibrarySearchAdapter` para OpenAlex, Crossref, DOAJ e
+  Internet Archive através de APIs públicas read-only. O adapter devolve apenas
+  metadados/títulos como unidades `UNVALIDATED_EXTERNAL_SOURCE`, com
+  `source_lineage` distinto por biblioteca.
+- Adicionada cobertura mocked determinística para as quatro bibliotecas, com
+  validação de URLs, filtragem de linhas malformadas e passagem de proveniência
+  até ao pipeline de `source_units`.
+- CORE e Perseus, bem como texto integral e snapshots, permanecem WIP até
+  terem adapters e contratos de proveniência próprios sem ambiguidade de
+  credenciais ou scraping.
+- A pesquisa de objectivo passou a recuperar primeiro o estado relativo ao
+  objectivo. A nomeação e a razão da recuperação são entregues à proposta da
+  LLM como pista bounded; a pesquisa continua a atravessar Firewall,
+  Gatekeeper, controller, EffectBroker e `/learn`, sem autoridade nova.
+- O runner question-only determinístico e a CLI local foram ligados com
+  isolamento explícito do baseline: o baseline não persiste nem faz resume; o
+  Fresta pode continuar por episódios bounded e arquiva checkpoints. Ambos
+  recebem apenas a pergunta e mantêm Φ aberto.
+- A interface Web passa a explicar o Fresta como um companheiro de investigação
+  semelhante a um Jarvis: memória persistente, pesquisa bounded e continuidade
+  através de janelas limitadas, mas sem autoridade de oráculo ou decisão
+  autónoma. A metáfora é apenas de UX; a ontologia continua a exigir
+  proveniência, risco e validação.
+- Regra de UX consolidada: **“O Fresta não inventa — investiga.”** Hipóteses e
+  perguntas podem ser propostas, mas factos e fontes não são fabricados; a
+  retenção continua dependente de proveniência, risco e validação.
+- Criada uma política de severidade conservadora: apenas `DENY` é alarme
+  `GRAVE` e requer checkpoint + meta-análise; `QUARANTINE` permanece `REVIEW`
+  sem pausa automática. A política não fecha Φ e aguarda a integração do
+  checkpoint/meta-analysis no controller.
+
+## 2026-09-03 — Primeiro caso histórico curado
+
+- Criado `roman-empire-fall-analysis` como primeiro caso histórico do benchmark.
+- O caso usa três observações curadas e separadas sobre fragmentação
+  administrativa, pressão fiscal-militar e conflito externo.
+- A tarefa exige uma leitura multicausal e preserva cada fonte como
+  `ATTESTATION`; não declara uma causa única nem concede promoção.
+- O fixture foi ligado ao manifest e ao baseline replay `learn-replay-v8`.
+- Este corte testa o `/learn` com material fornecido. A comparação
+  closed-book/open-book e a matriz Qwen/OSS continuam por executar.
+
+## 2026-09-03 — Lens explícita e guia ontológico inicial
+
+- O kernel passou a nomear como **Lens** a operação de segunda ordem já
+  realizada por Firewall, Gatekeeper, análise O1/O2/O3, Φ−, repair e
+  revalidação; não foi criado um controlador paralelo.
+- A saturação foi definida operacionalmente como perda contextual de
+  recuperabilidade sob o objecto, scope, filtro, grounding e recursos actuais.
+  Não é uma quantidade de informação, impossibilidade absoluta ou limiar
+  produzido por score.
+- A convergência meta-analítica pode fortalecer uma O3 específica do objecto
+  quando há relações O2 independentes, contraexemplos tratados e revalidação.
+  Essa O3 permanece contextual, revisável e nunca fecha Φ.
+- Criado `docs/ONTOLOGY-GUIDE.md` como WIP para utilizadores, separado da
+  autoridade constitucional do kernel.
+- `MetaAnalysisReport` expõe agora uma avaliação Lens estruturada de
+  recuperabilidade: `UNASSESSED`, `RECOVERABLE`, `AT_RISK`, `RESIDUAL` ou
+  `CONTESTED`. `RESIDUAL` exige testemunho estrutural explícito e nunca é
+  inferido apenas por score, timeout ou contagem de remainders.
+- Verificação: **411 testes totais aprovados**.
+- O smoke live com o modelo local actualmente carregado terminou sem promoção:
+  respostas incompletas ficaram `DEFERRED` com `EXECUTION_INCOMPLETE`. O caso
+  revelou uma falha no harness ao tentar construir um conceito com menos de dois
+  crystals; o benchmark passou a devolver o resultado bounded em vez de lançar
+  uma excepção não tipada.
+- A documentação pública passou a definir o Fresta como uma camada
+  **hipocampal para LLMs**: memória contextual persistente e suporte à
+  observação activa através de janelas limitadas. É uma analogia arquitectural,
+  não uma afirmação biológica, de consciência ou de autoridade independente.
+- A definição foi precisada no sentido funcional da **cibernética de segunda
+  ordem**: o Fresta observa e regula também o próprio processo de filtragem,
+  memória, erro e correcção, sem se tornar uma autoridade independente.
 
 ## Objetivo
 
@@ -816,6 +998,300 @@ superfície antes de construir o Web.
   o próximo catálogo deve cobrir escolhas finitas de ligação e repair.
 - Verificação: **323 testes Diamond; 510 testes totais**.
 
+## 2026-08-06 — provider de reflexão condicionado e persistência proposta
+
+- Ligado `LlmReflectionOperation` a uma blueprint/manifest real do controller,
+  mantendo `llm.generate` atrás do `EffectBroker` e da firewall constitucional.
+- `propose_chat_reflection()` materializa apenas referências do transcript já
+  persistido; sem trigger ou sem transcript não existe chamada ao modelo.
+- A resposta é ancorada pelo host em `REFLECTION_PROPOSAL_ONLY` e convertida,
+  quando válida, num claim de perfil ou trait de personalidade `PROPOSED`.
+  Nenhum caminho público escreve `ACTIVE`.
+- IDs de transcript, target, scope e autoridade são host-owned; conteúdo
+  malformado, target inválido ou autopromoção continuam a falhar fechados.
+- Smoke live sequencial com `qwen/qwen3-14b` via LM Studio respondeu uma proposta
+  `USER_PROFILE` sobre `NEW_PREFERENCE`, com autoridade não validada e sem
+  persistência ativa.
+- Verificação: **357 testes aprovados**.
+
+## 2026-09-03 — Gatekeeper de adoção controlada
+
+- Adicionado `ProfileAdoptionGatekeeper` separado da escrita pública dos stores.
+- Uma proposta só pode ser adotada com confirmação explícita `ADOPT`; confiança,
+  frequência ou resposta da LLM não promovem nada por si só.
+- A adoção cria uma nova versão `ACTIVE`, preservando a linhagem da proposta
+  anterior. Readoção de um registo ativo é recusada.
+- A aplicação expõe handlers distintos para perfil do utilizador e personalidade;
+  continua impossível escrever `ACTIVE` pelo store público.
+- Verificação: **359 testes aprovados**.
+
+Próximo corte recomendado: inspeção/auditoria das propostas e adoções, antes de
+iniciar o inventário determinístico de `/brain analyze`.
+
+## 2026-09-03 — inspeção read-only de perfil e personality
+
+- Stores passaram a expor inspeções por registo ou globais, verificando hash e
+  lineage através da mesma leitura selada usada no runtime.
+- O relatório mostra referências de versão, estados e versão mais recente sem
+  criar escrita, promoção ou confirmação implícita.
+- A aplicação expõe superfícies distintas para inspeção de claims e traits.
+- Verificação: **360 testes aprovados**.
+
+Próximo corte recomendado: integrar estes relatórios num comando de auditoria
+headless, antes do inventário determinístico de `/brain analyze`.
+
+## 2026-09-03 — auditoria de perfil na superfície headless
+
+- Adicionados `/profile inspect` e `/personality inspect` ao command service
+  partilhado, com filtros opcionais por ID.
+- Os comandos são read-only, não chamam a LLM e devolvem apenas referências,
+  lineage e estados já verificados pelos stores.
+- Help, parser e codec mantêm a mesma superfície para REPL e integrações.
+- Verificação: **361 testes aprovados**.
+
+Próximo corte recomendado: desenhar o inventário determinístico de `/brain analyze`.
+
+## 2026-09-03 — primeiro corte de `/brain analyze`
+
+- Criado relatório imutável com inventário determinístico de módulos nativos,
+  commits de aprendizagem, conceitos, chats e propostas de perfil/personality.
+- Diagnóstico é bounded e explícito; não chama a LLM, não altera stores e não
+  transforma coerência em verdade.
+- O relatório conserva autoridade própria (`BRAIN_ANALYSIS_REPORT_ONLY`), hash
+  verificável e remainders que mantêm PHI aberta.
+- Adicionado `/brain analyze` ao command service partilhado.
+- Teste de repetição confirma o mesmo hash sem mutação nem chamadas ao modelo.
+- Verificação: **362 testes aprovados**.
+
+Próximo corte recomendado: teste live controlado com um estado Diamond não vazio,
+seguido de desenho separado para qualquer futuro `/brain apply`.
+
+## 2026-09-03 — diagnóstico ontológico no `/brain analyze`
+
+- O relatório aceita agora um grafo estrutural bounded e reutiliza o
+  `OntologicalValidator` determinístico.
+- O diagnóstico distingue presença de O2 forte e estabilidade/justificação de
+  O3 através de FILTER; relações sem testemunho concreto permanecem abertas.
+- A saída conserva os remainders do grafo, não trata o parecer da LLM como fecho
+  e mantém `phi_open=true` sempre.
+- Testes cobrem tanto uma relação O2 testemunhada como a ausência das três partes
+  do testemunho O2, sem fabricar fecho O3/PHI.
+- Verificação: **364 testes aprovados**.
+
+Próximo corte recomendado: construir um caso integrado não vazio através do
+command service e executar o relatório completo sem mutações.
+
+## 2026-09-03 — teste integrado não vazio do `/brain analyze`
+
+- O command service cria agora um caso de regressão com chat persistido e claim
+  `PROPOSED` antes de executar o relatório.
+- O inventário observa corretamente o estado não vazio, incluindo chat e proposta,
+  sem chamar a LLM nem alterar qualquer store.
+- O teste confirma que a superfície continua observacional e que `phi_open`
+  permanece verdadeiro.
+- Verificação: **365 testes aprovados**.
+
+Próximo corte recomendado: iniciar o desenho do próximo WIP de intake/documentos
+ou aprofundar a auditoria ontológica sobre grafos reais.
+
+## 2026-09-03 — primeiro corte de intake documental
+
+- Criado `DocumentSource` imutável e content-addressed para ficheiros UTF-8.
+- O intake verifica caminho regular, conteúdo não vazio, limite de bytes e
+  SHA-256 sobre os bytes originais; falhas são explícitas.
+- A aplicação expõe `ingest_document()` sem transformar leitura em `/learn`,
+  verdade, memória ou autoridade.
+- O `source_ref` é `document:<sha256>` e fica pronto para provenance da futura
+  decomposição/batching.
+- Verificação: **368 testes aprovados**.
+
+Próximo corte recomendado: materializar este source em folhas bounded e ligar
+as folhas à seleção normal de `/learn`.
+
+## 2026-09-03 — materialização documental lossless
+
+- `DiamondApplication.materialize_document()` usa o source content-addressed para
+  criar uma decomposição de folhas bounded no workspace.
+- A decomposição conserva `source_ref`, SHA-256, ordem e conteúdo exacto; a
+  reconstrução dos leaves reproduz os bytes UTF-8 originais.
+- Folhas e índices permanecem `DRAFT`/não validados e não entram em memória sem
+  seleção explícita pela pipeline normal de `/learn`.
+- Colisões de identidade são recusadas pelo workspace/decomposer, evitando
+  reescrita silenciosa do mesmo documento.
+- Verificação: **369 testes aprovados**.
+
+Próximo corte recomendado: criar uma seleção bounded destas folhas e encaminhá-la
+para o intake normal de `/learn`, preservando checkpoints entre lotes.
+
+## 2026-09-03 — primeiro lote documental na pipeline `/learn`
+
+- `learn_document_leaves()` aceita apenas refs exactas da decomposição e processa
+  um lote bounded por chamada através do mesmo `learn_text()`/controller.
+- Cada folha conserva scope e provenance `document:<sha256>`; folhas pendentes são
+  devolvidas explicitamente para futura continuação/checkpoint.
+- Revisões stale e IDs inventados são recusados antes de chamar a LLM.
+- O teste integrado aprende uma folha, preserva as restantes como pending e
+  confirma a criação de apenas um commit normal de aprendizagem.
+- Verificação: **370 testes aprovados**.
+
+Próximo corte recomendado: persistir o cursor/checkpoint dos lotes e permitir
+resume sem repetir folhas já committed.
+
+## 2026-09-03 — checkpoints documentais e smoke live da pipeline
+
+- Criado `DocumentLearningCheckpoint` com hash, decomposition ID, objetivo e
+  refs processadas/pendentes; checkpoints repetidos não podem mudar de conteúdo.
+- `resume_document_learning()` valida a decomposição e retoma apenas refs
+  pendentes, sem repetir folhas já processadas.
+- O primeiro smoke live foi corretamente negado por permissões incompletas,
+  revelando o desvio entre a grant do teste e as permissões reais do adapter.
+- Repetido com `adapter.required_permissions`: uma chamada sequencial à
+  `qwen/qwen3-14b` concluiu `COMPLETED`, criou um commit e deixou zero remainders;
+  os validadores reportaram fecho estrutural e epistémico para o caso bounded.
+- Este fecho é local ao objeto/análise do caso e não fecha PHI constitucional.
+- Verificação: **370 testes aprovados**.
+
+Próximo corte recomendado: expor inspeção/resume dos checkpoints no command
+service e testar uma interrupção entre lotes.
+
+## 2026-09-03 — inspeção headless de checkpoints documentais
+
+- Adicionados `/document checkpoints` e `/document checkpoint CHECKPOINT_ID`.
+- A inspeção valida o hash do cursor e expõe decomposition, objetivo, folhas
+  processadas e refs pendentes sem chamar a LLM ou alterar o workspace.
+- O resume permanece tipado na aplicação até existir uma reconstrução persistente
+  da decomposição que seja segura para a superfície textual.
+- Verificação: **370 testes aprovados**.
+
+Próximo corte recomendado: modelar essa reconstrução exacta para permitir
+`/document resume` sem depender de objectos em memória.
+
+## 2026-09-03 — reconstrução persistente e `/document resume`
+
+- Checkpoints passaram a guardar a identidade completa da decomposição: source,
+  hash, root, leaves, índices e budget bounded.
+- A aplicação reconstrói refs exactas a partir do workspace, valida o hash por
+  reconstrução lossless e só depois permite retomar.
+- Adicionado `/document resume CHECKPOINT_ID [--max-leaves N]`, que continua
+  apenas folhas pendentes através do controller normal.
+- O comando é explicitamente model-capable, mas não concede autoridade nova:
+  cada folha repete Gatekeeper, validação estrutural/epistémica e commit normal.
+- Verificação: **370 testes aprovados**.
+
+Próximo corte recomendado: teste de interrupção/resume pela superfície textual
+com um documento multi-folha e adapter replay, seguido de smoke live bounded.
+
+## 2026-09-03 — resume textual após interrupção entre lotes
+
+- Checkpoints passaram a reconstruir a decomposição completa a partir do
+  workspace persistido, verificando refs hash-bound e reconstrução lossless.
+- `/document resume CHECKPOINT_ID [--max-leaves N]` retoma apenas folhas
+  pendentes pela pipeline normal; a folha previamente committed não é repetida.
+- O teste de interrupção usa o command service real e confirma dois commits
+  distintos, cursor pendente e chamadas apenas para o lote retomado.
+- Um erro de validação do argumento `--max-leaves` foi corrigido e coberto.
+- Verificação: **371 testes aprovados**.
+
+Próximo corte recomendado: smoke live multi-folha com interrupção deliberada,
+sem ultrapassar os budgets e grants declarados.
+
+## 2026-09-03 — sincronização do estado público com os WIPs reais
+
+- `docs/STATUS.md` deixou de descrever stores, reflexão, `brain analyze` e
+  aprendizagem documental como não implementados.
+- As limitações permanecem explícitas: convergência documental completa,
+  hardening, retenção, isolamento forte, Web e Workspace Agent continuam WIP.
+- O README distingue agora implementação bounded de maturidade de produção, sem
+  transformar testes locais em alegação de completude.
+- Publicado `docs/CONNECTION-MAP.md`, ligando command service, aplicação,
+  blueprints, controller, firewall, `EffectBroker`, Gatekeepers, stores e
+  remainders. O mapa reafirma que completude operacional não é fecho
+  epistémico nem fecho de PHI.
+- Criado adapter HTTP mínimo em `web_adapter.py`: apenas loopback, `GET
+  /health`, `POST /command`, limite de body e reutilização exclusiva do
+  `DiamondCommandService`. A política de autenticação/deployment fica aberta
+  antes de qualquer exposição além do processo local.
+- A meta-análise foi ancorada no kernel: análises podem ser O1 compostos,
+  convergência explícita reforça O2, e F exige evidência ligada a O3. Um
+  candidato coerente só é reconhecido com caminho válido `O3 -> FILTER -> PHI`;
+  isto ancora Φ como condição de possibilidade sem o fechar.
+- Criado `identity.py` com separação entre `COHERENT_CANDIDATE` e
+  `ACTIVE_SOCIAL_IDENTITY`. Coerência convergente não concede autoridade social;
+  activação exige evidência de autoridade/consentimento com scope explícito.
+- O Web adapter recebeu um token efémero por processo. O token autoriza apenas
+  o transporte local (`POST /command`), não é identidade social, não é
+  evidência ontológica, não é persistido e nunca é enviado à LLM.
+- O retrieval de atenção passou a resolver também versões `ACTIVE` de perfil do
+  utilizador e personalidade do assistente, através do mesmo
+  `CompositeAttentionResolver`, mas em stores e namespaces distintos.
+  Propostas continuam inelegíveis e a memória de tarefas não apaga esses
+  domínios duráveis.
+- A memória meta/ontológica passou a ter store versionado próprio e entrada no
+  retrieval comum. A regra explicitada é que não há diferenciação sem Φ como
+  abertura e F como filtragem; transparência exige expor O1, O2, O3, FILTER,
+  Φ+, Φ-, remainders e o caminho de grounding, tanto no sistema como na
+  análise.
+
+## 2026-09-03 — smoke live multi-folha com reinício e resume
+
+- O documento foi dividido em 48 folhas bounded; a primeira foi processada numa
+  chamada live ao `qwen/qwen3-14b`.
+- A aplicação foi reiniciada sobre o mesmo data root e reconstruiu a decomposição
+  pelo checkpoint hash-bound.
+- `/document resume` processou a folha seguinte, fez as chamadas necessárias
+  (incluindo repair bounded) e criou o segundo commit.
+- A primeira folha não foi repetida: 47 refs ficaram pendentes antes do resume,
+  46 depois; a reconstrução root permaneceu exacta.
+- A interrupção/resume é operacional; não equivale a verdade global nem fecha
+  PHI, e a análise permanece relativa ao objectivo bounded.
+
+## 2026-09-03 — hardening da convergência meta-ontológica
+
+- A convergência deixou de aceitar apenas repetição de conteúdo: uma proposta
+  coerente exige diversidade explícita de proveniência entre pelo menos duas
+  análises.
+- IDs de análise duplicados são rejeitados como remainder, evitando contar a
+  mesma fonte duas vezes.
+- Sem diversidade suficiente, o resultado permanece `INCOMPLETE`; não há
+  promoção para `COHERENT_CANDIDATE` nem fecho de Φ.
+- O hardening do Web revelou e corrigiu uma falha de ligação: a validação
+  comparava contra um literal em vez do token efémero gerado. O adapter exige
+  agora `Bearer <token>` real e usa comparação constante.
+- Verificação: **389 testes totais aprovados**.
+
+## 2026-09-03 — interface Web local utilizável
+
+- Criado `run_web.py`, que inicia uma aplicação persistente com os mesmos
+  parâmetros do runner/REPL e imprime URL e token efémero.
+- O adapter serve uma UI local mínima em `/`, com campo de token, execução de
+  comandos e visualização JSON dos resultados.
+- A UI não cria uma cadeia cognitiva paralela: usa exclusivamente
+  `DiamondCommandService`, mantendo os mesmos stores, budgets e authorities.
+- Smoke real do launcher respondeu `200` em `/health`; a suite completa passou
+  com **390 testes**.
+
+## 2026-09-03 — O2 meta exige análises distintas
+
+- Uma `ConvergenceEvidence` com duas referências iguais (`a1`, `a1`) já não
+  pode satisfazer a relação O2 entre análises.
+- O caso permanece `INCOMPLETE` com remainder explícito; repetição não é
+  convergência e não altera a abertura de Φ.
+- Verificação: **391 testes totais aprovados**.
+
+## 2026-09-03 — estados epistémicos para lacunas de convergência
+
+- `MetaAnalysisReport` separa agora o estado estrutural do estado epistémico:
+  `INTERNAL_ONLY`, `EXTERNAL_ONLY`, `MIXED_PROVENANCE`,
+  `INSUFFICIENT_GROUNDING` e `CONTESTED`.
+- Remainders recebem códigos explicativos: O2 ausente/inválido,
+  grounding `O3 -> FILTER -> PHI` em falta, independência de fonte não
+  estabelecida, identidade duplicada ou conflito por resolver.
+- A classificação é diagnóstico transparente da proveniência e da lacuna; não
+  transforma informação externa em verdade, não cria autoridade e não fecha Φ.
+- A proveniência desconhecida permanece `UNCLASSIFIED`, evitando inferências
+  sobre se veio da rede ou de dentro do Fresta.
+- Verificação: **391 testes totais aprovados**.
+
 ## 2026-08-06 — montagem estrutural canónica
 
 - Aplicado às ligações estruturais o mesmo princípio usado na classificação
@@ -913,3 +1389,33 @@ superfície antes de construir o Web.
   transcrito, comandos e ausência de commits implícitos.
 - Limites registados em `CHAT.md`, incluindo sync após sleep e falta de perfis.
 - Verificação: **340 testes Diamond; 527 testes totais**.
+
+## 2026-09-03 — typed provenance contracts and lineage
+
+- Kernel contracts now classify provenance conservatively as INTERNAL, EXTERNAL, MIXED, or UNKNOWN; legacy lists remain decodable without trusting caller-supplied labels.
+- Concept research queries carry typed pre-search intent, and source units preserve source-document/extracted-unit lineage. Objective retrieval carries the same provenance without breaking legacy APIs.
+- Phi remains open. No scholarly network adapter was added; existing bounded external research remains broker-mediated.
+- Verification: **403 tests passed**.
+
+## 2026-09-03 — explicit source lineages and bounded diagnostics
+
+- Source independence is now an explicit `source_lineage` carried by typed
+  provenance, source documents, extracted units, external source units and
+  structural manifestations. Different URLs remain locator diagnostics only;
+  they cannot establish independent support.
+- Meta-analysis reports conservative saturation and revalidation diagnostics.
+  These diagnostics do not close Φ, grant authority, or replace O1/O2/O3,
+  FILTER, or Gatekeeper decisions.
+- Verification: **403 tests passed**.
+
+## 2026-09-03 — smoke Web com GPT OSS e transporte corrigido
+
+- O processo Web imprimia o token já com `Bearer`, enquanto a UI acrescenta esse
+  esquema no cabeçalho; a saída foi corrigida para expor apenas o token bruto.
+- Propostas de query do GPT OSS podem representar `query_id` como inteiro; a
+  fronteira normaliza esse identificador sem relaxar os restantes contratos.
+- Uma investigação sem unidades de fonte agora termina como `INCOMPLETE` e não
+  cria uma resposta de atenção sem evidência externa.
+- Smoke live: autenticação e percurso Web responderam; com `openai/gpt-oss-20b`,
+  o estado seguro foi `INCOMPLETE` quando a pesquisa não produziu fontes,
+  mantendo Φ aberto. **427 testes passaram.**

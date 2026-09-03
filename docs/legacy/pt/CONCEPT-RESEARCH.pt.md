@@ -58,9 +58,12 @@ permission: internet.search:concept
 Sem adapter ou permissão, o controller nega a execução antes de chamar a
 operação. O adapter recebe o grant do plano e budgets explícitos.
 
-O provider concreto inicial é `WikipediaConceptSearchAdapter`. É opcional,
-configurável por língua e usa apenas leitura HTTPS verificada. Em Windows, o
-adapter usa o trust store do sistema sem desativar validação TLS.
+O provider concreto inicial é `WikipediaConceptSearchAdapter`. O adapter
+`AcademicLibrarySearchAdapter` cobre OpenAlex, Crossref, DOAJ e Internet
+Archive através de APIs públicas read-only, devolvendo apenas source units
+não validados e preservando `source_lineage`. CORE e Perseus continuam WIP
+até existir um contrato de acesso sem credenciais nem ambiguidade de
+scraping.
 
 ## Source units
 

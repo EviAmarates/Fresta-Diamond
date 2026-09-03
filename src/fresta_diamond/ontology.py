@@ -13,6 +13,8 @@ from fresta_diamond.contracts import (
     ExecutionState,
     Remainder,
     RemainderKind,
+    TypedProvenance,
+    decode_provenance,
 )
 from fresta_diamond.constitutional_firewall import nominate_constitutional_risks
 
@@ -48,7 +50,22 @@ class ManifestationEvidence:
     manifestation_id: str
     object_ref: str
     description: str
-    provenance: tuple[str, ...]
+    provenance: tuple[str, ...] | TypedProvenance
+    source_lineage: str | None = None
+
+    def __post_init__(self) -> None:
+        provenance = decode_provenance(self.provenance)
+        if (
+            self.source_lineage is not None
+            and provenance.source_lineage is not None
+            and self.source_lineage != provenance.source_lineage
+        ):
+            raise ValueError("Manifestation lineage does not match provenance")
+        lineage = self.source_lineage or provenance.source_lineage
+        if lineage is not None and not lineage.strip():
+            raise ValueError("Source lineage must be a non-empty reference")
+        object.__setattr__(self, "provenance", provenance.refs)
+        object.__setattr__(self, "source_lineage", lineage)
 
 
 @dataclass(frozen=True)
@@ -618,6 +635,7 @@ def encode_structural_evidence_graph(
                 "object_ref": item.object_ref,
                 "description": item.description,
                 "provenance": list(item.provenance),
+                "source_lineage": item.source_lineage,
             }
             for item in graph.manifestations
         ],
@@ -700,6 +718,7 @@ def decode_structural_evidence_graph(
                     object_ref=_required_text(item, "object_ref"),
                     description=_required_text(item, "description"),
                     provenance=_text_tuple(item, "provenance"),
+                    source_lineage=_optional_text(item, "source_lineage"),
                 )
                 for item in _mapping_sequence(root, "manifestations")
             ),
@@ -783,6 +802,15 @@ def _required_text(value: Mapping[str, Any], key: str) -> str:
     item = value.get(key)
     if not isinstance(item, str) or not item.strip():
         raise EvidenceGraphDecodeError(f"{key} must be non-empty text")
+    return item
+
+
+def _optional_text(value: Mapping[str, Any], key: str) -> str | None:
+    item = value.get(key)
+    if item is None:
+        return None
+    if not isinstance(item, str) or not item.strip():
+        raise EvidenceGraphDecodeError(f"{key} must be non-empty text or null")
     return item
 
 

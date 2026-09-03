@@ -9,12 +9,19 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from hashlib import sha256
 from pathlib import Path
 from threading import Lock
 from typing import Any
 from uuid import uuid4
 
 from fresta_diamond.anti_entropy import ModuleDiscoveryEvidence, ModuleSource
+from fresta_diamond.brain_analysis import BrainAnalysisReport, analyze_inventory
+from fresta_diamond.document_intake import DocumentSource, read_document
+from fresta_diamond.document_learning import (
+    DocumentLearningCheckpoint,
+    DocumentLearningCheckpointStore,
+)
 from fresta_diamond.attention_continuation import JsonAttentionContinuationStore
 from fresta_diamond.attention_memory import (
     AttentionContextRevision,
@@ -34,6 +41,8 @@ from fresta_diamond.attention_resolution import (
     CompositeAttentionResolver,
     ConceptAttentionResolver,
     LearningMemoryAttentionResolver,
+    ProfileAttentionResolver,
+    MetaMemoryAttentionResolver,
     WorkspaceAttentionResolver,
     workspace_sheet_content,
 )
@@ -48,8 +57,10 @@ from fresta_diamond.cognitive_workspace import (
     SheetElement,
     SheetElementKind,
     SheetRevision,
+    SheetRevisionRef,
     SheetState,
 )
+from fresta_diamond.sheet_hierarchy import MotherSheetOutcome
 from fresta_diamond.sheet_decomposition import (
     SheetDecompositionOutcome,
     SheetDecompositionService,
@@ -97,6 +108,13 @@ from fresta_diamond.objective_retrieval import (
     register_objective_retrieval_provider,
     objective_retrieval_manifest,
 )
+from fresta_diamond.objective_research import (
+    LlmObjectiveResearchQueryOperation,
+    decode_research_query_proposal,
+    objective_research_query_blueprint,
+    research_query_request,
+    register_objective_research_query_provider,
+)
 from fresta_diamond.concept_validation import (
     ConceptValidationOutcome,
     ConceptValidationReport,
@@ -110,7 +128,11 @@ from fresta_diamond.contracts import (
     RemainderKind,
 )
 from fresta_diamond.controller import DiamondController
-from fresta_diamond.constitutional_firewall import ConstitutionalFirewall
+from fresta_diamond.constitutional_firewall import (
+    ConstitutionalFirewall,
+    FirewallAttestation,
+    FirewallDecision,
+)
 from fresta_diamond.firewall_semantic import ControllerFirewallSemanticAnalyzer
 from fresta_diamond.effects import EffectBroker
 from fresta_diamond.learning import (
@@ -133,6 +155,9 @@ from fresta_diamond.llm_learning import (
     llm_learning_manifest,
 )
 from fresta_diamond.concept_research import (
+    ConceptResearchGap,
+    ConceptResearchGapKind,
+    ConceptResearchQuery,
     ConceptResearchRequest,
     WikipediaConceptSearchAdapter,
     build_concept_research_request,
@@ -146,6 +171,7 @@ from fresta_diamond.concept_integration import (
     ConceptSourceLearner,
     ExternalConceptLearningOutcome,
 )
+from fresta_diamond.journal import EventJournal, JsonlJournalArchive
 from fresta_diamond.module_design import (
     AtomicModuleSuggestionArchive,
     LlmModuleSuggestionOperation,
@@ -158,6 +184,11 @@ from fresta_diamond.module_design import (
     module_suggestion_manifest,
     register_module_suggestion_provider,
 )
+from fresta_diamond.risk_escalation import (
+    FirewallEscalationMetaAnalysisInput,
+    FirewallEscalationMetaAnalysisReport,
+    FirewallEscalationService,
+)
 from fresta_diamond.registry import ModuleRegistry
 from fresta_diamond.epistemology import (
     EpistemicEvidenceGraph,
@@ -167,6 +198,7 @@ from fresta_diamond.ontology import (
     StructuralEvidenceGraph,
     decode_structural_evidence_graph,
 )
+from fresta_diamond.workspace import JsonCheckpointStore
 from fresta_diamond.concepts import DerivationSeal
 from fresta_diamond.prompt_boundary import validate_model_messages
 from fresta_diamond.chat import (
@@ -175,11 +207,36 @@ from fresta_diamond.chat import (
     ChatRole,
     ChatSession,
 )
+from fresta_diamond.reflection import (
+    LlmReflectionOperation,
+    ReflectionProposal,
+    ReflectionRequest,
+    ReflectionTrigger,
+    decide_reflection,
+    reflection_blueprint,
+    reflection_manifest,
+    register_reflection_provider,
+    build_reflection_request,
+)
+from fresta_diamond.profiles import (
+    AssistantPersonalityStore,
+    AssistantPersonalityTrait,
+    PersonalityTraitBasis,
+    ProfileSensitivity,
+    ProfileInspection,
+    ProfileState,
+    UserClaimBasis,
+    UserProfileClaim,
+    UserProfileStore,
+)
+from fresta_diamond.meta_analysis import MetaAnalysisReport
+from fresta_diamond.meta_memory import MetaMemoryStore, StoredMetaAnalysis
 
 
 @dataclass(frozen=True)
 class DiamondDataPaths:
     root: Path
+    journal: Path
     workspace: Path
     learning_memory: Path
     concepts: Path
@@ -187,12 +244,18 @@ class DiamondDataPaths:
     continuations: Path
     module_suggestions: Path
     chat: Path
+    user_profile: Path
+    assistant_personality: Path
+    meta_memory: Path
+    document_checkpoints: Path
+    firewall_escalation_checkpoints: Path
 
     @classmethod
     def under(cls, root: str | Path) -> "DiamondDataPaths":
         resolved = Path(root).resolve()
         return cls(
             root=resolved,
+            journal=resolved / "journal",
             workspace=resolved / "workspace",
             learning_memory=resolved / "learning-memory",
             concepts=resolved / "concepts",
@@ -200,6 +263,11 @@ class DiamondDataPaths:
             continuations=resolved / "attention-continuations",
             module_suggestions=resolved / "module-suggestions",
             chat=resolved / "chat",
+            user_profile=resolved / "user-profile",
+            assistant_personality=resolved / "assistant-personality",
+            meta_memory=resolved / "meta-memory",
+            document_checkpoints=resolved / "document-learning-checkpoints",
+            firewall_escalation_checkpoints=resolved / "firewall-escalation-checkpoints",
         )
 
 
@@ -212,6 +280,36 @@ class DiamondLearnOutcome:
     stored_commit: StoredLearningCommit
     model_call_count: int
     repair_attempts_used: int
+
+
+@dataclass(frozen=True)
+class DiamondDocumentLearnOutcome:
+    decomposition: SheetDecompositionOutcome
+    outcomes: tuple[DiamondLearnOutcome, ...]
+    processed_leaf_refs: tuple[str, ...]
+    pending_leaf_refs: tuple[str, ...]
+    checkpoint: DocumentLearningCheckpoint
+
+
+@dataclass(frozen=True)
+class DiamondObjectiveResearchOutcome:
+    """One bounded objective research episode and its ordinary learning intake."""
+
+    request: ConceptResearchRequest
+    result: ControllerResult
+    source_artifact: Artifact | None
+    learned: tuple[DiamondLearnOutcome, ...]
+    model_call_count: int
+    retrieval: DiamondObjectiveRetrievalOutcome | None = None
+
+
+@dataclass(frozen=True)
+class DiamondObjectiveQueryOutcome:
+    """One controller-validated, but still unvalidated, query proposal."""
+
+    result: ControllerResult
+    queries: tuple[Mapping[str, Any], ...]
+    model_call_count: int
 
 
 @dataclass(frozen=True)
@@ -256,6 +354,17 @@ class DiamondChatTurnOutcome:
     attention: DiamondAttentionOutcome
     context: AttentionContextRevision
     transcript: SheetRevision
+    model_call_count: int
+
+
+CHAT_RESPONSE_MODES = ("conversation", "analysis")
+
+
+@dataclass(frozen=True)
+class DiamondChatReflectionOutcome:
+    result: ControllerResult
+    proposal: Mapping[str, Any] | None
+    stored: UserProfileClaim | AssistantPersonalityTrait | None
     model_call_count: int
 
 
@@ -335,6 +444,8 @@ class DiamondApplication:
         if max_attention_tokens < 32 or max_response_tokens < 1:
             raise ValueError("Diamond attention token limits are invalid")
         self.paths = DiamondDataPaths.under(data_root)
+        self.journal = EventJournal()
+        self.journal_archive = JsonlJournalArchive(self.paths.journal)
         self.workspace = JsonlCognitiveWorkspace(self.paths.workspace)
         self.memory = AtomicDiamondLearningMemory(self.paths.learning_memory)
         self.concept_store = AtomicConceptStore(self.paths.concepts)
@@ -346,6 +457,17 @@ class DiamondApplication:
             self.paths.module_suggestions
         )
         self.chat_store = AtomicChatStore(self.paths.chat)
+        self.user_profile_store = UserProfileStore(self.paths.user_profile)
+        self.assistant_personality_store = AssistantPersonalityStore(
+            self.paths.assistant_personality
+        )
+        self.meta_memory_store = MetaMemoryStore(self.paths.meta_memory)
+        self.firewall_escalation_checkpoint_store = JsonCheckpointStore(
+            self.paths.firewall_escalation_checkpoints
+        )
+        self._document_learning_checkpoints = DocumentLearningCheckpointStore(
+            self.paths.document_checkpoints
+        )
         self._adapter = llm_adapter
         self._permissions = tuple(required_permissions)
         self._max_tokens = max_tokens
@@ -355,6 +477,17 @@ class DiamondApplication:
         self._run_id_factory = run_id_factory or (lambda: uuid4().hex)
         self._model_calls = 0
         self._model_call_lock = Lock()
+        self.last_firewall_escalation: (
+            FirewallEscalationMetaAnalysisReport | None
+        ) = None
+        self._firewall_escalation_service = FirewallEscalationService(
+            checkpoint_store=self.firewall_escalation_checkpoint_store,
+            journal=self.journal,
+            journal_archive=self.journal_archive,
+            meta_memory_store=self.meta_memory_store,
+            checkpoint_id_factory=self._run_id_factory,
+            meta_analysis_id_factory=self._run_id_factory,
+        )
         self._firewall_semantic_analyzer = ControllerFirewallSemanticAnalyzer(
             self._invoke_model,
             self._permissions,
@@ -364,6 +497,12 @@ class DiamondApplication:
         )
 
     def _controller(self, registry: ModuleRegistry, **kwargs: Any) -> DiamondController:
+        kwargs.setdefault("journal", self.journal)
+        kwargs.setdefault("journal_archive", self.journal_archive)
+        kwargs.setdefault(
+            "firewall_escalation_handler",
+            self._firewall_escalation_handler,
+        )
         return DiamondController(registry, firewall=self._firewall, **kwargs)
 
     def _invoke_model(self, grant: Any, **kwargs: Any) -> Mapping[str, Any]:
@@ -490,6 +629,325 @@ class DiamondApplication:
             repair_attempts_used=attempts_used,
         )
 
+    def learn_document_leaves(
+        self,
+        decomposition: SheetDecompositionOutcome,
+        *,
+        objective: str,
+        max_leaves: int,
+        leaf_refs: tuple[str, ...] | None = None,
+    ) -> DiamondDocumentLearnOutcome:
+        """Learn an explicit bounded leaf batch; return untouched leaves."""
+        if not objective.strip():
+            raise ValueError("Document learning objective is required")
+        if max_leaves < 1:
+            raise ValueError("Document learning batch size must be positive")
+        requested = leaf_refs or tuple(ref.revision_id for ref in decomposition.leaf_refs)
+        known = {ref.revision_id: ref for ref in decomposition.leaf_refs}
+        if any(item not in known for item in requested):
+            raise ValueError("Document learning references an unknown leaf")
+        batch = tuple(dict.fromkeys(requested))[:max_leaves]
+        pending = tuple(item for item in requested if item not in batch)
+        outcomes = []
+        for revision_id in batch:
+            reference = known[revision_id]
+            revision = self.workspace.latest(reference.sheet_id)
+            if revision.revision_id != reference.revision_id:
+                raise ValueError("Document learning leaf revision is stale")
+            element = revision.elements[0]
+            outcomes.append(self.learn_text(
+                element.content,
+                scope=element.scope,
+                provenance=element.provenance,
+                objective=objective,
+                kind=element.kind,
+            ))
+        checkpoint_id = (
+            "document-learning-"
+            + sha256(
+                f"{decomposition.decomposition_id}|{objective}|{batch}".encode(
+                    "utf-8"
+                )
+            ).hexdigest()[:24]
+        )
+        checkpoint = DocumentLearningCheckpoint(
+            checkpoint_id=checkpoint_id,
+            decomposition_id=decomposition.decomposition_id,
+            objective=objective,
+            processed_leaf_refs=tuple(item for item in requested if item not in pending),
+            pending_leaf_refs=pending,
+            source_ref=decomposition.source_ref,
+            source_sha256=decomposition.source_sha256,
+            root_revision_id=decomposition.root.reference.revision_id,
+            leaf_revision_ids=tuple(
+                ref.revision_id for ref in decomposition.leaf_refs
+            ),
+            index_revision_ids=tuple(
+                ref.revision_id for ref in decomposition.index_refs
+            ),
+            max_child_content_tokens=decomposition.max_child_content_tokens,
+        )
+        self._document_learning_checkpoints.save(checkpoint)
+        return DiamondDocumentLearnOutcome(
+            decomposition=decomposition,
+            outcomes=tuple(outcomes),
+            processed_leaf_refs=batch,
+            pending_leaf_refs=pending,
+            checkpoint=checkpoint,
+        )
+
+    def resume_document_learning(
+        self,
+        checkpoint_id: str,
+        decomposition: SheetDecompositionOutcome,
+        *,
+        max_leaves: int,
+    ) -> DiamondDocumentLearnOutcome:
+        checkpoint = self._document_learning_checkpoints.load(checkpoint_id)
+        if checkpoint.decomposition_id != decomposition.decomposition_id:
+            raise ValueError("Document checkpoint belongs to another decomposition")
+        return self.learn_document_leaves(
+            decomposition,
+            objective=checkpoint.objective,
+            max_leaves=max_leaves,
+            leaf_refs=checkpoint.pending_leaf_refs,
+        )
+
+    def load_document_decomposition(
+        self,
+        checkpoint_id: str,
+    ) -> SheetDecompositionOutcome:
+        checkpoint = self._document_learning_checkpoints.load(checkpoint_id)
+
+        def reference(revision_id: str) -> SheetRevisionRef:
+            marker = ":revision:"
+            if marker not in revision_id:
+                raise ValueError("Document checkpoint contains an invalid revision ID")
+            return self.workspace.reference(revision_id.split(marker, 1)[0], revision_id)
+
+        root_reference = reference(checkpoint.root_revision_id)
+        root_revision = self.workspace.resolve_reference(root_reference.target_ref)
+        leaf_refs = tuple(reference(item) for item in checkpoint.leaf_revision_ids)
+        index_refs = tuple(reference(item) for item in checkpoint.index_revision_ids)
+        root = MotherSheetOutcome(
+            revision=root_revision,
+            reference=root_reference,
+            child_refs=self.workspace.children(
+                root_reference.sheet_id, root_reference.revision_id
+            ),
+            content_hash=checkpoint.source_sha256,
+        )
+        decomposition = SheetDecompositionOutcome(
+            decomposition_id=checkpoint.decomposition_id,
+            source_ref=checkpoint.source_ref,
+            source_sha256=checkpoint.source_sha256,
+            authority="UNVALIDATED_WORKSPACE_DECOMPOSITION",
+            root=root,
+            leaf_refs=leaf_refs,
+            index_refs=index_refs,
+            max_child_content_tokens=checkpoint.max_child_content_tokens,
+        )
+        SheetDecompositionService(self.workspace).reconstruct(decomposition)
+        return decomposition
+
+    def document_learning_checkpoints(
+        self,
+    ) -> tuple[DocumentLearningCheckpoint, ...]:
+        return self._document_learning_checkpoints.checkpoints()
+
+    def store_meta_analysis(self, report: MetaAnalysisReport) -> StoredMetaAnalysis:
+        """Persist a meta-analysis without granting it promotion authority."""
+        return self.meta_memory_store.save(report)
+
+    def consult_firewall_escalation(
+        self,
+        objective: str,
+        attestation: FirewallAttestation,
+    ) -> FirewallEscalationMetaAnalysisReport:
+        report = self._firewall_escalation_service.consult(
+            FirewallEscalationMetaAnalysisInput(
+                objective=objective,
+                attestation=attestation,
+            )
+        )
+        self.last_firewall_escalation = report
+        return report
+
+    def _firewall_escalation_handler(
+        self,
+        attestation: FirewallAttestation,
+        objective: str,
+    ) -> None:
+        if attestation.decision is FirewallDecision.DENY:
+            self.consult_firewall_escalation(objective, attestation)
+            return
+        self.last_firewall_escalation = None
+
+    def document_learning_checkpoint(
+        self,
+        checkpoint_id: str,
+    ) -> DocumentLearningCheckpoint:
+        return self._document_learning_checkpoints.load(checkpoint_id)
+
+    def propose_objective_queries(
+        self,
+        *,
+        objective: str,
+        scope: str,
+        max_queries: int = 4,
+        retrieval_hint: str = "",
+    ) -> DiamondObjectiveQueryOutcome:
+        """Ask the model for neutral queries through the normal controller path."""
+        model_position = self._model_position()
+        registry = ModuleRegistry()
+        register_objective_research_query_provider(
+            registry,
+            LlmObjectiveResearchQueryOperation(max_tokens=self._max_response_tokens),
+            self._permissions,
+        )
+        result = self._controller(
+            registry,
+            effect_broker=EffectBroker({"llm.generate": self._invoke_model}),
+        ).execute(
+            objective_research_query_blueprint(self._permissions),
+            objective,
+            {"request": research_query_request(
+                objective,
+                scope,
+                max_queries=max_queries,
+                retrieval_hint=retrieval_hint,
+            )},
+        )
+        artifact = result.execution.artifacts.get("query_proposal")
+        queries = (
+            decode_research_query_proposal(artifact)
+            if artifact is not None else ()
+        )
+        return DiamondObjectiveQueryOutcome(
+            result,
+            queries,
+            self._model_calls_since(model_position),
+        )
+
+    def research_objective(
+        self,
+        *,
+        objective: str,
+        scope: str,
+        queries: tuple[ConceptResearchQuery, ...] | None = None,
+        search_adapter: Callable[..., Mapping[str, Any]] | None = None,
+        max_queries: int = 4,
+        max_results_per_query: int = 2,
+    ) -> DiamondObjectiveResearchOutcome:
+        """Research an objective, then learn returned sources through normal intake.
+
+        When queries are omitted, they are proposed by the model through the
+        controller before the bounded Web search episode begins.
+        """
+        if not objective.strip() or not scope.strip():
+            raise ValueError("Objective research requires objective and scope")
+        model_position = self._model_position()
+        retrieval = None
+        try:
+            retrieval = self.retrieve_for_objective(
+                scope=scope,
+                objective=objective,
+                summary=(
+                    "Retrieve existing objective-relative knowledge before "
+                    "external research."
+                ),
+            )
+        except ObjectiveRetrievalEmpty:
+            retrieval = None
+        retrieval_hint = (
+            retrieval.nomination.rationale
+            if retrieval is not None and retrieval.nomination is not None
+            else ""
+        )
+        if queries is None:
+            proposal = self.propose_objective_queries(
+                objective=objective,
+                scope=scope,
+                max_queries=max_queries,
+                retrieval_hint=retrieval_hint,
+            )
+            queries = tuple(
+                ConceptResearchQuery(
+                    query_id=str(query["query_id"]),
+                    text=str(query["text"]),
+                    purpose=str(query["purpose"]),
+                    preferred_source_types=tuple(
+                        str(source_type)
+                        for source_type in query["preferred_source_types"]
+                    ),
+                    reveals_candidate_label=False,
+                    intent="NEUTRAL",
+                )
+                for query in proposal.queries
+            )
+        if not queries:
+            raise ValueError("Objective research requires at least one query")
+        if not 1 <= max_results_per_query <= 10:
+            raise ValueError("Objective research result budget is invalid")
+
+        request = ConceptResearchRequest(
+            request_id=f"objective-research:{uuid4()}",
+            concept_ref=f"objective:{sha256(objective.encode('utf-8')).hexdigest()[:24]}",
+            scope=scope,
+            gaps=(ConceptResearchGap(
+                kind=ConceptResearchGapKind.MISSING_RELATION,
+                target_ref="objective",
+                description=(
+                    "The objective requires bounded external observations before "
+                    "a source-grounded analysis can be continued."
+                ),
+            ),),
+            queries=queries,
+            max_results_per_query=max_results_per_query,
+        )
+        registry = ModuleRegistry()
+        register_concept_research_provider(registry)
+        result = self._controller(
+            registry,
+            effect_broker=EffectBroker({
+                "internet.search": (
+                    search_adapter or WikipediaConceptSearchAdapter()
+                )
+            }),
+        ).execute(
+            concept_research_blueprint(),
+            objective,
+            {"research_request": research_request_artifact(request)},
+        )
+        source_artifact = result.execution.artifacts.get("source_units")
+        if source_artifact is None:
+            return DiamondObjectiveResearchOutcome(
+                request,
+                result,
+                None,
+                (),
+                self._model_calls_since(model_position),
+                retrieval,
+            )
+
+        learned = tuple(
+            self.learn_text(
+                unit.content,
+                scope=scope,
+                provenance=(unit.source_locator,),
+                objective=objective,
+            )
+            for unit in decode_source_units(source_artifact)
+        )
+        return DiamondObjectiveResearchOutcome(
+            request,
+            result,
+            source_artifact,
+            learned,
+            self._model_calls_since(model_position),
+            retrieval,
+        )
+
     def learning_commits(self) -> tuple[StoredLearningCommit, ...]:
         return self.memory.commits()
 
@@ -592,6 +1050,7 @@ class DiamondApplication:
             objective_retrieval_manifest(self._permissions),
             attention_prompt_manifest(self._permissions),
             module_suggestion_manifest(self._permissions),
+            reflection_manifest(self._permissions),
         )
 
     def crystals(
@@ -1322,11 +1781,7 @@ class DiamondApplication:
             remainder_refs=tuple(remainders),
         )
         materialized = AttentionMaterializationService(
-            CompositeAttentionResolver((
-                LearningMemoryAttentionResolver(self.memory),
-                ConceptAttentionResolver(self.concept_store),
-                WorkspaceAttentionResolver(self.workspace),
-            )),
+            self._attention_resolver(),
             continuation_store=self.attention_continuations,
         ).materialize_and_project(
             context,
@@ -1418,11 +1873,16 @@ class DiamondApplication:
         message: str,
         *,
         token_budget: int | None = None,
+        response_mode: str = "conversation",
     ) -> DiamondChatTurnOutcome:
         """Persist a user turn, run bounded attention, and preserve any response."""
 
         if not message.strip():
             raise ValueError("Chat message cannot be blank")
+        if response_mode not in CHAT_RESPONSE_MODES:
+            raise ValueError(
+                "Chat response mode must be 'conversation' or 'analysis'"
+            )
         model_position = self._model_position()
         session = self.chat_store.session(session_id)
         user_message = self.chat_store.append(
@@ -1439,7 +1899,7 @@ class DiamondApplication:
         )
         attention = self.attention_turn(
             session.context_id,
-            instruction=message,
+            instruction=_chat_instruction(message, response_mode),
             token_budget=token_budget,
         )
         response = attention.result.execution.artifacts.get("response")
@@ -1466,6 +1926,7 @@ class DiamondApplication:
                 )
                 transcript = assistant_projection.sheet
         context = self.attention_memory.latest(session.context_id)
+        transcript = self.chat_transcript(session_id)
         return DiamondChatTurnOutcome(
             session,
             user_message,
@@ -1476,6 +1937,20 @@ class DiamondApplication:
             self._model_calls_since(model_position),
         )
 
+    def resume_chat(
+        self,
+        session_id: str,
+        checkpoint_id: str,
+        *,
+        summary: str | None = None,
+    ) -> tuple[AttentionContextRevision, SheetRevision]:
+        """Resume one chat's attention and return its exact transcript head."""
+        session = self.chat_store.session(session_id)
+        context = self.resume_attention(checkpoint_id, summary=summary)
+        if context.context_id != session.context_id:
+            raise ValueError("Chat checkpoint belongs to another attention context")
+        return context, self.chat_transcript(session_id)
+
     def chat_session(self, session_id: str) -> ChatSession:
         return self.chat_store.session(session_id)
 
@@ -1484,6 +1959,221 @@ class DiamondApplication:
 
     def chat_messages(self, session_id: str) -> tuple[ChatMessage, ...]:
         return self.chat_store.messages(session_id)
+
+    def archive_chat(self, session_id: str, *, reason: str) -> ChatSession:
+        return self.chat_store.archive(session_id, reason=reason)
+
+    def abandon_chat(self, session_id: str, *, reason: str) -> ChatSession:
+        return self.chat_store.abandon(session_id, reason=reason)
+
+    def chat_transcript(self, session_id: str) -> SheetRevision:
+        session = self.chat_store.session(session_id)
+        return self.workspace.latest(session.transcript_sheet_id)
+
+    def consider_chat_reflection(
+        self,
+        session_id: str,
+        *,
+        trigger: ReflectionTrigger | None,
+    ) -> ReflectionProposal:
+        session = self.chat_store.session(session_id)
+        messages = self.chat_store.messages(session_id)
+        request = ReflectionRequest(
+            session_id=session.session_id,
+            trigger=trigger,
+            objective=session.objective,
+            scope=session.scope,
+            transcript_refs=tuple(item.message_id for item in messages),
+        )
+        return decide_reflection(request)
+
+    def propose_chat_reflection(
+        self,
+        session_id: str,
+        *,
+        trigger: ReflectionTrigger | None,
+    ) -> DiamondChatReflectionOutcome:
+        """Ask the bounded provider and persist only a PROPOSED record."""
+        model_position = self._model_position()
+        session = self.chat_store.session(session_id)
+        messages = self.chat_store.messages(session_id)
+        request = ReflectionRequest(
+            session_id=session.session_id,
+            trigger=trigger,
+            objective=session.objective,
+            scope=session.scope,
+            transcript_refs=tuple(item.message_id for item in messages),
+        )
+        request_artifact = build_reflection_request(request)
+        registry = ModuleRegistry()
+        register_reflection_provider(
+            registry,
+            required_permissions=self._permissions,
+            operation=LlmReflectionOperation(max_tokens=self._max_response_tokens),
+        )
+        result = self._controller(
+            registry,
+            effect_broker=EffectBroker({"llm.generate": self._invoke_model}),
+        ).execute(
+            reflection_blueprint(self._permissions),
+            session.objective,
+            {"request": request_artifact},
+        )
+        artifact = result.execution.artifacts.get("proposal")
+        if artifact is None:
+            return DiamondChatReflectionOutcome(
+                result, None, None, self._model_calls_since(model_position)
+            )
+        proposal = dict(artifact.payload)
+        stored = self._store_reflection_proposal(proposal)
+        return DiamondChatReflectionOutcome(
+            result, proposal, stored, self._model_calls_since(model_position)
+        )
+
+    def _store_reflection_proposal(
+        self,
+        proposal: Mapping[str, Any],
+    ) -> UserProfileClaim | AssistantPersonalityTrait:
+        source = tuple(proposal["transcript_refs"])
+        identity = sha256(
+            "|".join((proposal["scope"], proposal["target"], proposal["content"])).encode()
+        ).hexdigest()[:24]
+        if proposal["target"] == "USER_PROFILE":
+            record = UserProfileClaim(
+                claim_id=f"reflection-{identity}",
+                version=1,
+                category=proposal["category"],
+                content=proposal["content"],
+                scope=proposal["scope"],
+                basis=UserClaimBasis.HYPOTHESIS,
+                confidence=0.5,
+                provenance=source,
+                sensitivity=ProfileSensitivity.PERSONAL,
+                state=ProfileState.PROPOSED,
+                rationale=proposal["rationale"],
+            )
+            self.user_profile_store.save(record)
+            return record
+        record = AssistantPersonalityTrait(
+            trait_id=f"reflection-{identity}",
+            version=1,
+            category=proposal["category"],
+            content=proposal["content"],
+            scope=proposal["scope"],
+            basis=PersonalityTraitBasis.META_ANALYSIS,
+            confidence=0.5,
+            provenance=source,
+            state=ProfileState.PROPOSED,
+            rationale=proposal["rationale"],
+        )
+        self.assistant_personality_store.save(record)
+        return record
+
+    def adopt_user_profile(
+        self,
+        claim_id: str,
+        *,
+        confirmation: str,
+    ) -> UserProfileClaim:
+        adopted = self.user_profile_store.gatekeeper().adopt(
+            claim_id,
+            confirmation=confirmation,
+        )
+        if not isinstance(adopted, UserProfileClaim):
+            raise TypeError("User profile gatekeeper returned an invalid record")
+        return adopted
+
+    def adopt_assistant_personality(
+        self,
+        trait_id: str,
+        *,
+        confirmation: str,
+    ) -> AssistantPersonalityTrait:
+        adopted = self.assistant_personality_store.gatekeeper().adopt(
+            trait_id,
+            confirmation=confirmation,
+        )
+        if not isinstance(adopted, AssistantPersonalityTrait):
+            raise TypeError(
+                "Assistant personality gatekeeper returned an invalid record"
+            )
+        return adopted
+
+    def inspect_user_profiles(
+        self,
+        claim_id: str | None = None,
+    ) -> tuple[ProfileInspection, ...]:
+        return self.user_profile_store.inspect(claim_id)
+
+    def inspect_assistant_personality(
+        self,
+        trait_id: str | None = None,
+    ) -> tuple[ProfileInspection, ...]:
+        return self.assistant_personality_store.inspect(trait_id)
+
+    def brain_analyze(
+        self,
+        *,
+        ontology_graph: StructuralEvidenceGraph | None = None,
+    ) -> BrainAnalysisReport:
+        """Return a deterministic diagnostic snapshot without mutation."""
+        manifests = tuple({
+            "module_id": manifest.module_id,
+            "version": manifest.version,
+            "operation_ids": tuple(
+                operation.operation_id for operation in manifest.operations
+            ),
+        } for manifest in self._native_module_manifests())
+        return analyze_inventory(
+            manifests=manifests,
+            learning_commit_count=len(self.learning_commits()),
+            concept_count=len(self.latest_concepts()),
+            chat_count=len(self.chat_sessions()),
+            proposed_profile_count=sum(
+                item.state is ProfileState.PROPOSED
+                for item in self.user_profile_store.records()
+            ),
+            proposed_personality_count=sum(
+                item.state is ProfileState.PROPOSED
+                for item in self.assistant_personality_store.records()
+            ),
+            ontology_graph=ontology_graph,
+        )
+
+    def ingest_document(
+        self,
+        path: str | Path,
+        *,
+        max_bytes: int = 10_000_000,
+    ) -> DocumentSource:
+        """Read one UTF-8 source without implying learning or truth."""
+        return read_document(path, max_bytes=max_bytes)
+
+    def materialize_document(
+        self,
+        source: DocumentSource,
+        *,
+        scope: str,
+        title: str,
+        max_child_content_tokens: int,
+        objective: str | None = None,
+    ) -> SheetDecompositionOutcome:
+        """Create hash-bound bounded sheets without entering learning memory."""
+        if not scope.strip() or not title.strip():
+            raise ValueError("Document materialization scope and title are required")
+        mother_id = f"document-{source.content_sha256[:24]}"
+        mother_revision_id = f"{mother_id}:revision:1"
+        return SheetDecompositionService(self.workspace).decompose(
+            content=source.content,
+            source_ref=source.source_ref,
+            mother_sheet_id=mother_id,
+            mother_revision_id=mother_revision_id,
+            title=title,
+            scope=scope,
+            max_child_content_tokens=max_child_content_tokens,
+            objective_ref=objective,
+            decomposition_id=f"decomposition:{source.content_sha256[:24]}",
+        )
 
     def attention_turn(
         self,
@@ -1750,6 +2440,17 @@ class DiamondApplication:
             LearningMemoryAttentionResolver(self.memory),
             ConceptAttentionResolver(self.concept_store),
             WorkspaceAttentionResolver(self.workspace),
+            ProfileAttentionResolver(
+                self.user_profile_store,
+                resolver_id="user-profile",
+                prefix="user-profile:",
+            ),
+            ProfileAttentionResolver(
+                self.assistant_personality_store,
+                resolver_id="assistant-personality",
+                prefix="assistant-personality:",
+            ),
+            MetaMemoryAttentionResolver(self.meta_memory_store),
         ))
 
     @staticmethod
@@ -1854,3 +2555,17 @@ class DiamondApplication:
                 ),
             },
         )
+
+
+def _chat_instruction(message: str, response_mode: str) -> str:
+    if response_mode == "analysis":
+        framing = (
+            "Respond in analytical mode. Separate source-grounded observations, "
+            "interpretations, and open questions. Keep Phi open."
+        )
+    else:
+        framing = (
+            "Respond conversationally and naturally while staying source-grounded. "
+            "State uncertainty plainly and keep Phi open."
+        )
+    return f"{framing}\n\nUser message:\n{message}"

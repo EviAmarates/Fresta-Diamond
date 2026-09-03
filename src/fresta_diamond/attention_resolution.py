@@ -38,6 +38,12 @@ from fresta_diamond.learning_memory import (
     CrystalRetrievalPolicy,
     LearningMemoryError,
 )
+from fresta_diamond.profiles import (
+    AssistantPersonalityStore,
+    ProfileState,
+    UserProfileStore,
+)
+from fresta_diamond.meta_memory import MetaMemoryStore
 from fresta_diamond.phi_minus import PhiMinusObservation
 from fresta_diamond.workspace import (
     CheckpointStoreError,
@@ -352,6 +358,109 @@ class WorkspaceAttentionResolver:
             if "Unknown sheet" in str(exc):
                 return _miss(item_ref, self.resolver_id)
             return _store_error(item_ref, self.resolver_id, exc)
+
+
+class ProfileAttentionResolver:
+    """Resolve active durable profile records through the shared attention path."""
+
+    def __init__(
+            self,
+            store: UserProfileStore | AssistantPersonalityStore,
+            *,
+            resolver_id: str,
+            prefix: str,
+    ) -> None:
+            self._store = store
+            self.resolver_id = resolver_id
+            self._prefix = prefix
+
+    def resolve(
+            self,
+            item_ref: str,
+            context: AttentionContextRevision,
+            nomination: AttentionNomination,
+    ) -> ResolverResult:
+            if not item_ref.startswith(self._prefix):
+                return _miss(item_ref, self.resolver_id)
+            try:
+                records = tuple(
+                    item for item in self._store.records()
+                    if item.version_ref == item_ref and item.state is ProfileState.ACTIVE
+                )
+            except (ValueError, TypeError, OSError) as exc:
+                return _store_error(item_ref, self.resolver_id, exc)
+            if not records:
+                return ResolverResult(
+                    item_ref,
+                    AttentionResolutionStatus.INELIGIBLE,
+                    self.resolver_id,
+                    detail="Only ACTIVE profile records may enter durable attention",
+                )
+            record = records[0]
+            if record.scope != context.scope:
+                return _wrong_scope(item_ref, self.resolver_id, record.scope)
+            return _resolved(
+                AttentionCandidate(
+                    item_ref=item_ref,
+                    kind=AttentionItemKind.NOTE,
+                    content=record.content,
+                    scope=record.scope,
+                    authority=f"{record.authority}:{record.state.value}",
+                    evidence_state=AttentionEvidenceState.VALIDATED,
+                    relevance=nomination.relevance,
+                    contextual_roles=nomination.contextual_roles,
+                    provenance=record.provenance,
+                ),
+                self.resolver_id,
+            )
+
+
+class MetaMemoryAttentionResolver:
+    resolver_id = "meta-memory"
+
+    def __init__(self, store: MetaMemoryStore) -> None:
+            self._store = store
+
+    def resolve(
+            self,
+            item_ref: str,
+            context: AttentionContextRevision,
+            nomination: AttentionNomination,
+    ) -> ResolverResult:
+            if not item_ref.startswith("meta-analysis:"):
+                return _miss(item_ref, self.resolver_id)
+            try:
+                records = tuple(
+                    item for item in self._store.records()
+                    if item.version_ref == item_ref
+                )
+            except (ValueError, TypeError, OSError) as exc:
+                return _store_error(item_ref, self.resolver_id, exc)
+            if not records:
+                return _miss(item_ref, self.resolver_id)
+            record = records[0]
+            return _resolved(
+                AttentionCandidate(
+                    item_ref=item_ref,
+                    kind=AttentionItemKind.NOTE,
+                    content=(
+                        f"Meta-analysis {record.report.meta_analysis_id}: "
+                        f"{record.report.state.value}; "
+                        f"constraints={len(record.report.inherited_constraints)}; "
+                        f"phi_open={record.report.phi_open}."
+                    ),
+                    scope=context.scope,
+                    authority=record.report.authority,
+                    evidence_state=AttentionEvidenceState.VALIDATED,
+                    relevance=nomination.relevance,
+                    contextual_roles=nomination.contextual_roles,
+                    provenance=(
+                        f"meta-analysis:{record.report.meta_analysis_id}",
+                        f"meta-analysis-hash:{record.content_hash}",
+                    ),
+                ),
+                self.resolver_id,
+            )
 
 
 class CheckpointAttentionResolver:

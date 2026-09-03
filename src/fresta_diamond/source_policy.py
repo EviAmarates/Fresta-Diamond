@@ -25,6 +25,69 @@ class ResearchStopDecision(str, Enum):
 
 
 @dataclass(frozen=True)
+class ExternalLibrarySpec:
+    """Configurable external library hint; it has no validation authority."""
+
+    library_id: str
+    source_types: tuple[str, ...]
+    endpoint: str
+    heuristic_tags: tuple[str, ...] = ()
+    enabled: bool = True
+    authority: str = "EXTERNAL_HEURISTIC_ONLY"
+
+    def __post_init__(self) -> None:
+        if not self.library_id.strip() or not self.endpoint.strip():
+            raise ValueError("External library identity and endpoint are required")
+        if not self.source_types:
+            raise ValueError("External library source types are required")
+        if self.authority != "EXTERNAL_HEURISTIC_ONLY":
+            raise PermissionError("External libraries cannot grant authority")
+
+
+def default_external_libraries() -> tuple[ExternalLibrarySpec, ...]:
+    """Return the replaceable seed list for objective-relative research."""
+
+    return (
+        ExternalLibrarySpec(
+            "openalex",
+            ("ACADEMIC", "BIBLIOGRAPHIC"),
+            "https://api.openalex.org/works",
+            ("peer-reviewed", "citation-graph"),
+        ),
+        ExternalLibrarySpec(
+            "crossref",
+            ("ACADEMIC", "BIBLIOGRAPHIC"),
+            "https://api.crossref.org/works",
+            ("doi", "publisher-metadata"),
+        ),
+        ExternalLibrarySpec(
+            "core",
+            ("ACADEMIC", "OPEN_ACCESS"),
+            "https://core.ac.uk",
+            ("open-access", "repository"),
+        ),
+        ExternalLibrarySpec(
+            "doaj",
+            ("ACADEMIC", "OPEN_ACCESS"),
+            "https://doaj.org",
+            ("open-access", "journal-index"),
+        ),
+        ExternalLibrarySpec(
+            "perseus",
+            ("PRIMARY_SOURCE", "HISTORICAL"),
+            "https://www.perseus.tufts.edu",
+            ("classics", "primary-text"),
+        ),
+        ExternalLibrarySpec(
+            "internet-archive",
+            ("PRIMARY_SOURCE", "HISTORICAL"),
+            "https://archive.org",
+            ("digitized-books", "snapshot"),
+        ),
+    )
+
+
+@dataclass(frozen=True)
 class ExternalEvidencePolicy:
     """Minimum coverage for one bounded recognition review."""
 
@@ -49,6 +112,7 @@ class ExternalEvidenceAssessment:
     stop_decision: ResearchStopDecision
     source_families: tuple[str, ...]
     source_family_counts: tuple[tuple[str, int], ...]
+    source_lineages: tuple[str, ...]
     source_types: tuple[str, ...]
     query_ids: tuple[str, ...]
     unmet_requirements: tuple[str, ...]
@@ -57,7 +121,11 @@ class ExternalEvidenceAssessment:
 
 
 class ExternalEvidenceAssessor:
-    """Evaluate coverage without claiming semantic truth or source authority."""
+    """Evaluate coverage without claiming semantic truth or source authority.
+
+    Hostname families remain useful locator diagnostics, but only explicit
+    source-lineage references can satisfy the independence requirement.
+    """
 
     _NEUTRAL_QUERIES = frozenset({
         "query:features",
@@ -81,11 +149,20 @@ class ExternalEvidenceAssessor:
             source_family(item.source_locator) for item in units
         )
         family_counts = Counter(families)
+        lineages = tuple(
+            sorted({
+                item.source_lineage
+                for item in units
+                if item.source_lineage
+            })
+        )
         query_ids = {item.query_id for item in units}
         unmet: list[str] = []
         if len(units) < self.policy.minimum_source_units:
             unmet.append("MINIMUM_SOURCE_UNITS")
-        if len(family_counts) < self.policy.minimum_source_families:
+        if any(not item.source_lineage for item in units):
+            unmet.append("SOURCE_LINEAGE_REQUIRED")
+        if len(lineages) < self.policy.minimum_source_families:
             unmet.append("INDEPENDENT_SOURCE_FAMILIES")
         if (
             self.policy.require_neutral_query
@@ -116,6 +193,7 @@ class ExternalEvidenceAssessor:
             stop_decision=decision,
             source_families=tuple(sorted(family_counts)),
             source_family_counts=tuple(sorted(family_counts.items())),
+            source_lineages=lineages,
             source_types=tuple(sorted({
                 item.source_type for item in units
             })),

@@ -6,6 +6,7 @@ import pytest
 
 from fresta_diamond.cognitive_workspace import JsonlCognitiveWorkspace
 from fresta_diamond.concept_research import (
+    AcademicLibrarySearchAdapter,
     CONCEPT_SEARCH_PERMISSION,
     ConceptResearchGapKind,
     build_concept_research_request,
@@ -312,3 +313,209 @@ def test_targeted_research_only_queries_the_missing_concept_part(tmp_path) -> No
     assert {gap.target_ref for gap in request.gaps} == {target}
     assert [query.query_id for query in request.queries] == ["query:boundaries"]
     assert all(not query.reveals_candidate_label for query in request.queries)
+
+
+def test_academic_library_adapter_routes_supported_public_sources(monkeypatch) -> None:
+    adapter = AcademicLibrarySearchAdapter()
+    calls: list[str] = []
+
+    def fake_get_json(self, url: str):
+        calls.append(url)
+        if "api.openalex.org/works" in url:
+            return {
+                "results": [
+                    {
+                        "title": "OpenAlex title",
+                        "doi": "https://doi.org/10.1234/openalex",
+                    },
+                    {
+                        "title": 1,
+                        "id": "https://openalex.org/ignored",
+                    },
+                ]
+            }
+        if "api.crossref.org/works" in url:
+            return {
+                "message": {
+                    "items": [
+                        {
+                            "title": ["Crossref title"],
+                            "DOI": "10.5678/crossref",
+                        },
+                        {
+                            "title": ["Ignored"],
+                        },
+                    ]
+                }
+            }
+        if "doaj.org/api/search/articles" in url:
+            return {
+                "results": [
+                    {
+                        "bibjson": {
+                            "title": "DOAJ title",
+                            "link": [{"url": "https://doaj.example/article"}],
+                        }
+                    },
+                    {
+                        "bibjson": {
+                            "title": "Ignored",
+                            "link": [],
+                        }
+                    },
+                ]
+            }
+        if "archive.org/advancedsearch.php" in url:
+            return {
+                "response": {
+                    "docs": [
+                        {
+                            "identifier": "archive-id",
+                            "title": "Internet Archive title",
+                            "description": "Archive description",
+                        },
+                        {
+                            "identifier": "ignored",
+                            "title": 1,
+                            "description": "bad row",
+                        },
+                    ]
+                }
+            }
+        raise AssertionError(f"Unexpected academic URL: {url}")
+
+    monkeypatch.setattr(
+        AcademicLibrarySearchAdapter,
+        "_get_json",
+        fake_get_json,
+    )
+
+    grant = type("Grant", (), {"permissions": (CONCEPT_SEARCH_PERMISSION,)})()
+    result = adapter(
+        grant,
+        queries=(
+            {
+                "query_id": "query:academic",
+                "text": "bounded concept",
+                "preferred_source_types": (
+                    "ACADEMIC",
+                    "BIBLIOGRAPHIC",
+                    "OPEN_ACCESS",
+                    "HISTORICAL",
+                ),
+            },
+        ),
+        max_results_per_query=2,
+    )
+
+    assert len(calls) == 4
+    assert any("api.openalex.org/works" in url for url in calls)
+    assert any("api.crossref.org/works" in url for url in calls)
+    assert any("doaj.org/api/search/articles" in url for url in calls)
+    assert any("archive.org/advancedsearch.php" in url for url in calls)
+    assert result["results"] == [
+        {
+            "query_id": "query:academic",
+            "title": "OpenAlex title",
+            "snippet": "OpenAlex title",
+            "url": "https://doi.org/10.1234/openalex",
+            "source_type": "ACADEMIC",
+            "source_lineage": "library:openalex",
+        },
+        {
+            "query_id": "query:academic",
+            "title": "Crossref title",
+            "snippet": "Crossref title",
+            "url": "https://doi.org/10.5678/crossref",
+            "source_type": "BIBLIOGRAPHIC",
+            "source_lineage": "library:crossref",
+        },
+        {
+            "query_id": "query:academic",
+            "title": "DOAJ title",
+            "snippet": "DOAJ title",
+            "url": "https://doaj.example/article",
+            "source_type": "OPEN_ACCESS",
+            "source_lineage": "library:doaj",
+        },
+        {
+            "query_id": "query:academic",
+            "title": "Internet Archive title",
+            "snippet": "Archive description",
+            "url": "https://archive.org/details/archive-id",
+            "source_type": "HISTORICAL",
+            "source_lineage": "library:internet-archive",
+        },
+    ]
+
+
+def test_academic_library_adapter_preserves_source_lineage_through_research_pipeline(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    concept, report = validated(tmp_path)
+    request = build_concept_research_request(
+        concept,
+        report,
+        max_queries=1,
+        max_results_per_query=4,
+        request_id="concept-research:academic",
+    )
+
+    def fake_get_json(self, url: str):
+        if "api.openalex.org/works" in url:
+            return {
+                "results": [
+                    {
+                        "title": "OpenAlex title",
+                        "doi": "https://doi.org/10.1234/openalex",
+                    }
+                ]
+            }
+        if "api.crossref.org/works" in url:
+            return {
+                "message": {
+                    "items": [
+                        {
+                            "title": ["Crossref title"],
+                            "DOI": "10.5678/crossref",
+                        }
+                    ]
+                }
+            }
+        if "doaj.org/api/search/articles" in url:
+            return {
+                "results": [
+                    {
+                        "bibjson": {
+                            "title": "DOAJ title",
+                            "link": [{"url": "https://doaj.example/article"}],
+                        }
+                    }
+                ]
+            }
+        raise AssertionError(f"Unexpected academic URL: {url}")
+
+    monkeypatch.setattr(
+        AcademicLibrarySearchAdapter,
+        "_get_json",
+        fake_get_json,
+    )
+
+    result = research_system(AcademicLibrarySearchAdapter()).execute(
+        concept_research_blueprint(),
+        "Research academic sources",
+        {"research_request": research_request_artifact(request)},
+    )
+    units = decode_source_units(result.execution.artifacts["source_units"])
+
+    assert result.execution.state is ExecutionState.COMPLETED
+    assert [item.source_lineage for item in units] == [
+        "library:openalex",
+        "library:crossref",
+        "library:doaj",
+    ]
+    assert all(
+        item.authority == "UNVALIDATED_EXTERNAL_SOURCE"
+        for item in units
+    )

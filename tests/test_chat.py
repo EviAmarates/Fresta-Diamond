@@ -7,6 +7,7 @@ import pytest
 from fresta_diamond.chat import (
     AtomicChatStore,
     ChatRole,
+    ChatState,
     ChatStoreError,
 )
 
@@ -83,7 +84,6 @@ def test_chat_store_rejects_duplicate_message_identity(tmp_path) -> None:
         provenance=("operator:user-supplied",),
         message_id="chat-message:fixed",
     )
-
     with pytest.raises(ChatStoreError, match="already exists"):
         store.append(
             session.session_id,
@@ -91,4 +91,28 @@ def test_chat_store_rejects_duplicate_message_identity(tmp_path) -> None:
             content="Second message.",
             provenance=("operator:user-supplied",),
             message_id="chat-message:fixed",
+        )
+
+
+def test_chat_lifecycle_is_append_only_and_blocks_new_messages(tmp_path) -> None:
+    store = AtomicChatStore(tmp_path / "chat")
+    session = store.create(
+        session_id="chat:lifecycle-test",
+        context_id="context:lifecycle-test",
+        transcript_sheet_id="chat-transcript:lifecycle-test",
+        scope="scope:test",
+        objective="Preserve explicit lifecycle.",
+    )
+
+    archived = store.archive(session.session_id, reason="Objective completed.")
+
+    assert archived.state is ChatState.ARCHIVED
+    assert store.session(session.session_id).state is ChatState.ARCHIVED
+    assert (store.root / next(store.root.iterdir()).name / "lifecycle.jsonl").exists()
+    with pytest.raises(ChatStoreError, match="not active"):
+        store.append(
+            session.session_id,
+            role=ChatRole.USER,
+            content="After archive.",
+            provenance=("operator:user-supplied",),
         )

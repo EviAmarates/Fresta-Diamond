@@ -10,6 +10,8 @@ It does not define public interfaces or an alternative cognitive pipeline to the
 - `run_learn_qwen.py` — manual learning-path smoke.
 - `run_attention_qwen.py` — attention-path smoke.
 - `run_objective_retrieval_qwen.py` — objective-relative retrieval smoke.
+- `run_question_only_benchmark.py` — one-case question-only benchmark runner
+  with explicit local model, academic search, and benchmark data-root config.
 - `run_application_smoke_qwen.py` — composed learning/concept/evidence smoke.
 - `run_concept_evidence_qwen.py` — concept-evidence smoke; `--resolve-gaps`
   performs the bounded research → `/learn` → revision → re-evaluation handoff

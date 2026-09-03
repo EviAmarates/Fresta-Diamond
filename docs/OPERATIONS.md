@@ -58,11 +58,32 @@ Current central command families:
 | Family | Purpose |
 |---|---|
 | `/learn` | bounded text learning and controlled commit |
+| `/research` | direct bounded question investigation through retrieval, Web research, `/learn`, and attention |
 | `/attention` | create, turn, resume, inspect, retrieve |
 | `/workspace` | create, inspect, and append cognitive sheets |
 | `/chat` | start, speak, inspect, and list persistent chats |
 | `/concept` | list, inspect, nominate, evaluate, resolve |
 | `/module` | bounded capability design proposals and inspection |
+
+The loopback Web UI exposes the same investigation path without requiring slash
+commands. Start it with a dedicated data root and the already-loaded local
+OpenAI-compatible endpoint:
+
+```powershell
+python run_web.py --data-root .\local-web-data `
+  --base-url http://127.0.0.1:1234 --model qwen/qwen3-14b
+```
+
+Paste the ephemeral transport token printed by the process, then write a
+question in the investigation box. A result may be `COMPLETED`, `SUSPENDED`, or
+`INCOMPLETE`; inspect the returned sources, authority, remainders, and
+`continuation_checkpoint_id` before continuing. When suspended, the UI exposes
+a continuation button backed by the same `chat.resume` and `chat.say` commands.
+Choose `Conversation` for a natural conversational answer or `Analysis` for
+separated observations, interpretations, and open questions. This changes
+presentation only; it never grants authority or closes Phi.
+External sources remain unvalidated until the normal learning and validation
+path says otherwise.
 
 An `INCOMPLETE` command result exits with code `3`; parsing/configuration/runtime
 errors exit with `2`. Neither runner converts an incomplete model response into

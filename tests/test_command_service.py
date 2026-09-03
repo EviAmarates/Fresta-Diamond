@@ -26,6 +26,8 @@ from fresta_diamond.concepts import (
     ConceptSignature,
     ConceptState,
 )
+from fresta_diamond.profiles import UserClaimBasis, UserProfileClaim
+from fresta_diamond.chat import ChatRole
 from fresta_diamond.prompt_boundary import read_inert_data
 from fresta_diamond.learning import LEARN_PREPARE_CAPABILITY
 
@@ -64,7 +66,11 @@ def test_help_exposes_one_canonical_surface_with_model_metadata(tmp_path) -> Non
         "attention.retrieve",
         "attention.status",
         "attention.turn",
+        "brain.analyze",
         "chat.list",
+        "chat.archive",
+        "chat.abandon",
+        "chat.resume",
         "chat.say",
         "chat.start",
         "chat.status",
@@ -73,16 +79,23 @@ def test_help_exposes_one_canonical_surface_with_model_metadata(tmp_path) -> Non
         "concept.list",
         "concept.nominate",
         "concept.resolve",
+        "document.checkpoint",
+        "document.checkpoints",
+        "document.resume",
         "help",
         "learn",
+        "research",
         "module.inspect",
         "module.proposals",
         "module.suggest",
+        "personality.inspect",
+        "profile.inspect",
         "workspace.append",
         "workspace.create",
         "workspace.show",
     }
     assert by_name["learn"]["may_call_model"] is True
+    assert by_name["research"]["may_call_model"] is True
     assert by_name["attention.status"]["may_call_model"] is False
     assert by_name["attention.retrieve"]["may_call_model"] is True
     assert by_name["chat.start"]["may_call_model"] is True
@@ -92,9 +105,91 @@ def test_help_exposes_one_canonical_surface_with_model_metadata(tmp_path) -> Non
     assert by_name["concept.list"]["may_call_model"] is False
     assert by_name["concept.nominate"]["may_call_model"] is True
     assert by_name["concept.resolve"]["may_call_model"] is True
+    assert by_name["profile.inspect"]["may_call_model"] is False
+    assert by_name["document.resume"]["may_call_model"] is True
     assert result.authority == COMMAND_RESULT_AUTHORITY
     encoded = encode_command_result(result)
     assert json.loads(json.dumps(encoded, ensure_ascii=False))["command"] == "help"
+
+
+def test_brain_analyze_is_deterministic_read_only_and_keeps_phi_open(tmp_path) -> None:
+    app, commands = service(
+        tmp_path,
+        lambda *_args, **_kwargs: pytest.fail("brain analyze must not call model"),
+    )
+
+    first = commands.execute_line("/brain analyze")
+    second = commands.execute_line("/brain analyze")
+
+    assert first.state is CommandState.COMPLETED
+    assert first.model_call_count == 0
+    assert first.payload["authority"] == "BRAIN_ANALYSIS_REPORT_ONLY"
+    assert first.payload["content_hash"] == second.payload["content_hash"]
+    assert any("PHI remains open" in item for item in first.payload["remainders"])
+    assert first.payload["inventory"]["modules"]
+    assert app.learning_commits() == ()
+
+
+def test_brain_analyze_integrated_non_empty_state_is_observational(tmp_path) -> None:
+    app, commands = service(
+        tmp_path,
+        lambda *_args, **_kwargs: pytest.fail("brain analyze must not call model"),
+    )
+    started = app.start_chat(
+        scope="scope:chat",
+        objective="Preserve a bounded collaboration.",
+    )
+    app.chat_store.append(
+        started.session.session_id,
+        role=ChatRole.USER,
+        content="Keep the response bounded.",
+        provenance=("operator:user-supplied",),
+    )
+    app.user_profile_store.save(UserProfileClaim(
+        claim_id="preference:brain",
+        version=1,
+        category="style",
+        content="Prefer bounded answers.",
+        scope="scope:collaboration",
+        basis=UserClaimBasis.HYPOTHESIS,
+        confidence=0.5,
+        provenance=("chat-message:brain",),
+    ))
+
+    result = commands.execute_line("/brain analyze")
+
+    inventory = result.payload["inventory"]
+    assert inventory["chat_count"] == 1
+    assert inventory["proposed_profile_count"] == 1
+    assert result.payload["ontology"]["phi_open"] is True
+    assert len(app.chat_messages(started.session.session_id)) == 1
+    assert len(app.user_profile_store.records()) == 1
+
+
+def test_profile_inspection_command_is_read_only_and_filterable(tmp_path) -> None:
+    app, commands = service(
+        tmp_path,
+        lambda *_args, **_kwargs: pytest.fail("profile inspection must not call model"),
+    )
+    claim = UserProfileClaim(
+        claim_id="preference:command-inspect",
+        version=1,
+        category="style",
+        content="Use concise answers.",
+        scope="scope:collaboration",
+        basis=UserClaimBasis.HYPOTHESIS,
+        confidence=0.5,
+        provenance=("chat-message:1",),
+    )
+    app.user_profile_store.save(claim)
+
+    result = commands.execute_line(
+        f"/profile inspect {claim.claim_id}"
+    )
+
+    assert result.state is CommandState.COMPLETED
+    assert result.model_call_count == 0
+    assert result.payload["records"][0]["latest_state"] == "PROPOSED"
 
 
 def test_learn_command_uses_application_pipeline_and_reports_commit(tmp_path) -> None:
@@ -121,6 +216,145 @@ def test_learn_command_uses_application_pipeline_and_reports_commit(tmp_path) ->
     assert result.payload["technical_completed"] is True
     assert len(app.learning_commits()) == 1
     assert len(calls) == result.model_call_count
+
+
+def test_research_command_runs_bounded_web_to_learning_and_attention(
+    tmp_path,
+) -> None:
+    attention_prompts = []
+
+    def adapter(_grant, **kwargs):
+        joined = "\n".join(item["content"] for item in kwargs["messages"])
+        if 'label="objective_research_request"' in joined:
+            return {
+                "content": json.dumps({
+                    "queries": [{
+                        "query_id": "q1",
+                        "text": "Roman Empire administrative change",
+                        "purpose": "find a bounded external observation",
+                        "preferred_source_types": ["ACADEMIC"],
+                    }],
+                }),
+                "model": "command-research-test",
+            }
+        if 'label="objective_retrieval_request"' in joined:
+            request = read_inert_data(joined, "objective_retrieval_request")
+            item = request["candidates"][0]
+            return {
+                "content": json.dumps({
+                    "decision": "SELECT",
+                    "items": [{
+                        "item_ref": item["item_ref"],
+                        "relevance": 0.9,
+                        "contextual_roles": [1, 2, 3],
+                        "rationale": "Exact objective-relative candidate.",
+                    }],
+                    "rationale": "Select the bounded candidate.",
+                }),
+                "model": "command-research-test",
+            }
+        if 'label="bounded_attention"' in joined:
+            attention_prompts.append(joined)
+            return {
+                "content": "A bounded answer grounded in the retrieved source.",
+                "model": "command-research-test",
+            }
+        return {
+            "content": json.dumps(response_bundle("candidate:test-run")),
+            "model": "command-research-test",
+        }
+
+    def search_adapter(_grant, *, queries, **_kwargs):
+        return {
+            "results": [{
+                "query_id": queries[0]["query_id"],
+                "title": "Administrative change",
+                "snippet": "A bounded external observation.",
+                "url": "https://example.org/rome",
+                "source_type": "ACADEMIC",
+                "source_lineage": "library:test",
+            }],
+        }
+
+    app = DiamondApplication(
+        tmp_path,
+        adapter,
+        required_permissions=PERMISSIONS,
+        repair_attempts=0,
+        run_id_factory=lambda: "test-run",
+        max_attention_tokens=2_000,
+        max_response_tokens=500,
+    )
+    commands = DiamondCommandService(
+        app,
+        concept_search_adapter=search_adapter,
+        invocation_id_factory=lambda: "command:research",
+    )
+
+    result = commands.invoke(
+        "research",
+        question="Why did the Roman Empire change?",
+        scope="scope:research-command",
+        max_queries=1,
+        max_results_per_query=1,
+        response_mode="analysis",
+    )
+
+    assert result.state is CommandState.COMPLETED
+    assert result.payload["objective"] == "Why did the Roman Empire change?"
+    assert result.payload["response_mode"] == "analysis"
+    assert result.payload["sources"][0]["authority"] == (
+        "UNVALIDATED_EXTERNAL_SOURCE"
+    )
+    assert result.payload["learning"][0]["crystal_states"]
+    assert result.payload["chat"]["assistant_message"]["content"]
+    assert result.payload["phi_open"] is True
+    assert "Respond in analytical mode." in attention_prompts[0]
+
+
+def test_research_command_does_not_answer_without_external_sources(tmp_path) -> None:
+    def adapter(_grant, **kwargs):
+        joined = "\n".join(item["content"] for item in kwargs["messages"])
+        if 'label="objective_research_request"' in joined:
+            return {
+                "content": json.dumps({
+                    "queries": [{
+                        "query_id": "q1",
+                        "text": "Roman Empire administrative change",
+                        "purpose": "find a bounded external observation",
+                        "preferred_source_types": ["ACADEMIC"],
+                    }],
+                }),
+                "model": "command-research-test",
+            }
+        raise AssertionError("Attention must not run without source units")
+
+    def search_adapter(_grant, **_kwargs):
+        return {"results": []}
+
+    app = DiamondApplication(
+        tmp_path,
+        adapter,
+        required_permissions=PERMISSIONS,
+        repair_attempts=0,
+    )
+    commands = DiamondCommandService(
+        app,
+        concept_search_adapter=search_adapter,
+        invocation_id_factory=lambda: "command:research-empty",
+    )
+
+    result = commands.invoke(
+        "research",
+        question="Why did the Roman Empire change?",
+        scope="scope:research-command",
+        max_queries=1,
+        max_results_per_query=1,
+    )
+
+    assert result.state is CommandState.INCOMPLETE
+    assert result.payload["sources"] == ()
+    assert result.payload["phi_open"] is True
 
 
 def test_attention_commands_create_turn_status_and_use_same_context(tmp_path) -> None:
@@ -280,6 +514,9 @@ def test_chat_commands_share_persistent_attention_and_history(tmp_path) -> None:
     )
     status = commands.execute_line(f"/chat status {session_id}")
     listed = commands.execute_line("/chat list")
+    archived = commands.execute_line(
+        f'/chat archive {session_id} "Objetivo concluído"'
+    )
 
     assert started.model_call_count == said.model_call_count == 1
     assert said.payload["assistant_message"]["authority"] == (
@@ -290,6 +527,7 @@ def test_chat_commands_share_persistent_attention_and_history(tmp_path) -> None:
         "ASSISTANT",
     ]
     assert listed.payload["sessions"][0]["session_id"] == session_id
+    assert archived.payload["session"]["state"] == "ARCHIVED"
     assert status.model_call_count == listed.model_call_count == 0
 
 

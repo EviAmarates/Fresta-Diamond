@@ -1541,6 +1541,62 @@ the derivational ground at PHI precisely by recognizing incompleteness.
 
 ---
 
+## 23. Lens, Recoverability, and Structural Saturation
+
+### Derivation
+
+The Lens is not an additional authority above the kernel. It names the
+second-order operation already performed by the Firewall, Gatekeeper, bounded
+retrieval, Three-Order validation, Phi-minus recording, repair, and
+revalidation: observing whether the current filter still permits coherent
+persistence and further observation.
+
+For a bounded object, a restriction may begin as an external or provisional
+hypothesis. Repeated O2 evidence can show that it explains the persistence of
+an O1 under the object's contextual O3. When this convergence survives
+independent analyses, counterexamples, and revalidation, the restriction may
+become a strong contextual O3. It remains scoped to that object and analysis;
+it does not become a universal essence.
+
+Structural saturation is a contextual loss of recoverability. Under the
+current object, scope, filter, grounding, and resources, the system can no
+longer reintegrate material without increasing unresolved structural debt,
+losing provenance, repeating an ineffective repair, or silently changing the
+conditions of analysis. It is not a quantity of information or a claim of
+final impossibility.
+
+### Invariant
+
+> The Lens may predict and regulate pressure on coherence, but only grounded
+> O1/O2/O3 evidence can justify a structural verdict.
+
+### It does not mean
+
+- A proxy, score, timeout, remainder count, or model self-report cannot declare
+  saturation by itself.
+- Residual debt is not permanent impossibility; it identifies what cannot be
+  reintegrated under the current conditions.
+- A convergent contextual O3 does not close Phi or become a universal law.
+- A successful repair is not evidence of recovery unless the relevant
+  remainder, provenance, and persistence relation are revalidated.
+
+### Computational contract
+
+1. Lens observations distinguish diagnostic signals from structural witnesses
+   and from Gatekeeper decisions.
+2. Signals may indicate absorptive pressure, filter rigidity, or residual debt;
+   they retain scope, object, provenance, and the operation that produced them.
+3. A recoverability or saturation state requires an explicit Three-Order
+   account of what remains reintegrable, what became residual, and why.
+4. When the account is insufficient, the system returns an open diagnostic and
+   preserves Phi-minus rather than manufacturing a threshold verdict.
+5. Meta-analysis may strengthen an object-conditioned O3 and its filter only
+   through independent convergence, counterexample handling, and revalidation.
+6. User-facing language may call this process the Lens, but persisted authority
+   remains with the constitutional kernel, validators, and Gatekeeper.
+
+---
+
 # Part V — Fresta Computational Constitution
 
 Planned sections:

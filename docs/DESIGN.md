@@ -85,8 +85,10 @@ unvalidated work. A sheet is not learning memory. Promotion to durable knowledge
 still requires `/learn` and the relevant Gatekeepers.
 
 Large objects can be decomposed losslessly and resumed from exact child
-references. Budget exhaustion creates a checkpoint, pause, or typed remainder;
-it never pretends that the model has infinite context.
+references. Budget exhaustion creates a checkpoint, pause, or typed remainder.
+The model context remains bounded per call, while the Fresta task context can
+continue effectively without a fixed total window through durable memory,
+retrieval, and exact resume.
 
 ## Chat, profiles, and personality
 

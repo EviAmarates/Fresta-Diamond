@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Mapping
+from collections.abc import Callable, Mapping
 
 from fresta_diamond.contracts import Artifact, BlueprintSpec, ControllerResult
 from fresta_diamond.constitutional_firewall import (
@@ -51,6 +51,8 @@ class DiamondController:
         journal: EventJournal | None = None,
         journal_archive: JournalArchive | None = None,
         checkpoint_store: CheckpointStore | None = None,
+        firewall_escalation_handler: Callable[[FirewallAttestation, str], None]
+        | None = None,
         firewall: ConstitutionalFirewall | None | object = _DEFAULT_FIREWALL,
     ) -> None:
         self._registry = registry
@@ -69,6 +71,7 @@ class DiamondController:
                 "Checkpoint persistence requires an injected journal archive"
             )
         self._checkpoint_store = checkpoint_store
+        self._firewall_escalation_handler = firewall_escalation_handler
         if firewall is _DEFAULT_FIREWALL:
             firewall = ConstitutionalFirewall()
         if firewall is None:
@@ -94,6 +97,7 @@ class DiamondController:
                 firewall_attestation.analysis_id,
                 firewall_attestation,
             )
+            self._escalate_firewall(firewall_attestation, objective)
             raise FirewallInterventionError(firewall_attestation)
         proposed = self._resolver.resolve(blueprint, objective, inputs, self._registry)
         cause = self._record_firewall(proposed.plan_id, firewall_attestation)
@@ -157,6 +161,7 @@ class DiamondController:
                 firewall_attestation.analysis_id,
                 firewall_attestation,
             )
+            self._escalate_firewall(firewall_attestation, checkpoint.plan.objective)
             raise FirewallInterventionError(firewall_attestation)
         cause = self._record_firewall(
             checkpoint.plan.plan_id,
@@ -428,6 +433,15 @@ class DiamondController:
                 "integrity_digest": attestation.integrity_digest,
             },
         )
+
+    def _escalate_firewall(
+        self,
+        attestation: FirewallAttestation,
+        objective: str,
+    ) -> None:
+        if self._firewall_escalation_handler is None:
+            return
+        self._firewall_escalation_handler(attestation, objective)
 
     def _record(
         self,

@@ -12,9 +12,15 @@ Diamond WIP repository.
    module autonomy, and the planned interfaces.
 4. [Operations](OPERATIONS.md) — install, tests, REPL, command runner, local
    model configuration, and benchmark lab.
-5. [Status](STATUS.md) — implemented scope, deliberate limitations, and the
+5. [Benchmark protocol](BENCHMARK-PROTOCOL.md) — question-only comparison,
+   Web access, bounded continuation, and current implementation boundary.
+6. [Status](STATUS.md) — implemented scope, deliberate limitations, and the
    next safe milestones.
-6. [Security](SECURITY.md) — current boundary claims and what remains WIP.
+7. [Connection map](CONNECTION-MAP.md) — command, application, controller,
+   effect, store, and authority boundaries.
+8. [Security](SECURITY.md) — current boundary claims and what remains WIP.
+9. [Ontology guide](ONTOLOGY-GUIDE.md) — user-facing explanation of Phi, F,
+   the Three Orders, the Lens, and structural saturation.
 
 ## Documentary authority
 

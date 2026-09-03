@@ -121,6 +121,54 @@
         "promotion_authority": false
       },
       "model_call_count": 1
+    },
+    "roman-empire-fall-analysis": {
+      "technical_completed": true,
+      "structural_closed": true,
+      "constitutional_closed": null,
+      "epistemic_closed": true,
+      "remainder_kinds": [],
+      "crystals": [
+        {
+          "source_element_id": "claim:rome-administrative-fragmentation",
+          "state": "PROVISIONAL",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": ["ATTESTATION_BURDEN_SATISFIED"]
+        },
+        {
+          "source_element_id": "claim:rome-fiscal-military-pressure",
+          "state": "PROVISIONAL",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": ["ATTESTATION_BURDEN_SATISFIED"]
+        },
+        {
+          "source_element_id": "claim:rome-external-conflict",
+          "state": "PROVISIONAL",
+          "claim_mode": "ATTESTATION",
+          "reason_codes": ["ATTESTATION_BURDEN_SATISFIED"]
+        }
+      ],
+      "evidence_source_actors": ["source:document"],
+      "evidence_source_locators": [
+        "document:roman-history-curated:administration",
+        "document:roman-history-curated:external-conflict",
+        "document:roman-history-curated:fiscal-military"
+      ],
+      "document_identity_boundary_preserved": true,
+      "negative_boundary": [],
+      "learning_memory": {
+        "commit_schema": "fresta://diamond-learning-commit@1",
+        "committed": true,
+        "crystals_committed": 3,
+        "positive_crystals": 3,
+        "indeterminate_crystals": 0,
+        "excluded_crystals": 0,
+        "negative_observations": 0,
+        "justified_phi_minus": 0,
+        "pending_commits": 0,
+        "promotion_authority": false
+      },
+      "model_call_count": 1
     }
   }
 }

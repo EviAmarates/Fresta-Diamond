@@ -13,6 +13,14 @@ in the Frankenstein implementation. It is not a rewrite of every existing
 file. It contains only contracts and behavior that can be stated independently
 of the REPL, Web UI, local data, a particular LLM, or a particular module.
 
+Fresta is best understood as a hippocampal layer for LLMs, functionally framed
+through second-order cybernetics: a persistent, objective-relative substrate
+for contextual memory, consolidation, retrieval, replay, and continued
+observation that also observes and regulates its own filtering across bounded
+model calls. This is an architectural analogy grounded in the stores,
+attention, lineage, checkpoints, Phi-minus, validators, Firewall, and
+Gatekeeper; it is not a biological or consciousness claim.
+
 The architecture must allow a third party to add a module without editing the
 kernel, controller, blueprint, command registry, or user interface.
 

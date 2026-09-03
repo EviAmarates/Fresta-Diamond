@@ -12,28 +12,32 @@
         "title": "Automóvel como veículo motorizado",
         "snippet": "Uma descrição enciclopédica associa o automóvel a transporte, propulsão e componentes coordenados.",
         "url": "https://encyclopedia.example/automobile-features",
-        "source_type": "ENCYCLOPEDIC"
+        "source_type": "ENCYCLOPEDIC",
+        "source_lineage": "lineage:encyclopedia"
       },
       {
         "query_id": "query:relations",
         "title": "Relações funcionais em sistemas automóveis",
         "snippet": "Uma fonte técnica descreve motor, transmissão e controlo como subsistemas relacionados na produção de mobilidade.",
         "url": "https://research.example/automobile-relations",
-        "source_type": "ACADEMIC"
+        "source_type": "ACADEMIC",
+        "source_lineage": "lineage:research"
       },
       {
         "query_id": "query:boundaries",
         "title": "Limites da categoria automóvel",
         "snippet": "A delimitação varia perante veículos autónomos, protótipos incompletos e agregados sem capacidade funcional de transporte.",
         "url": "https://standards.test/automobile-boundaries",
-        "source_type": "ACADEMIC"
+        "source_type": "ACADEMIC",
+        "source_lineage": "lineage:standards"
       },
       {
         "query_id": "query:label",
         "title": "Automóvel",
         "snippet": "O termo automóvel é usado para uma classe reconhecida de veículos, embora definições específicas dependam do âmbito.",
         "url": "https://reference.test/automobile-label",
-        "source_type": "ENCYCLOPEDIC"
+        "source_type": "ENCYCLOPEDIC",
+        "source_lineage": "lineage:reference"
       }
     ]
   }

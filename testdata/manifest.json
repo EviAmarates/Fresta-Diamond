@@ -37,12 +37,17 @@
     {
       "case_id": "automobile-concept-research",
       "fixture": "fixtures/automobile-concept-research.json",
-      "sha256": "daaeb305f1f3779dda3f60d8ba2fc10b30c56f267cf8c8a9abde5c503bbc3803"
+      "sha256": "e450db87c90b77c3f59811a020d92e34b78733116a9a08b2c407dd984d4b0338"
     },
     {
       "case_id": "automobile-concept-integration",
       "fixture": "fixtures/automobile-concept-integration.json",
       "sha256": "45dd15cfaa24c77c267092c221758f1bf5d230d89a933d58766d4dd6db341acd"
+    },
+    {
+      "case_id": "roman-empire-fall-analysis",
+      "fixture": "fixtures/roman-empire-fall-analysis.json",
+      "sha256": "c927d8a96325890fbf6256bd879086086d963e1459af84567c6207b03cf36baa"
     }
   ]
 }

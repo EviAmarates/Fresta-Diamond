@@ -63,6 +63,11 @@ def researched(tmp_path, *, max_queries=4, same_family=False):
                 "source_type": (
                     "ACADEMIC" if index % 2 else "ENCYCLOPEDIC"
                 ),
+                "source_lineage": (
+                    "lineage:shared-publisher"
+                    if same_family
+                    else f"lineage:external-{index}"
+                ),
             }
             for index, item in enumerate(queries, start=1)
         ]}

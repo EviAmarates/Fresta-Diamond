@@ -14,10 +14,13 @@ from fresta_diamond.cognitive_workspace import (
     SheetRevision,
     SheetState,
 )
+from fresta_diamond.chat import ChatRole
 from fresta_diamond.concepts import ConceptSignature, ConceptState
 from fresta_diamond.crystallization import CrystalState
 from fresta_diamond.sheet_decomposition import SheetDecompositionService
 from fresta_diamond.prompt_boundary import read_inert_data
+from fresta_diamond.reflection import ReflectionTrigger
+from fresta_diamond.profiles import ProfileState, UserProfileClaim
 
 from .test_concept_evidence import evidence_bundle
 
@@ -121,6 +124,8 @@ def test_persistent_learn_commits_and_reloads_memory(tmp_path) -> None:
     assert len(app.crystals(scope="scope:cars")) == 1
     assert app.crystals(scope="scope:cars")[0].state is CrystalState.PROVISIONAL
     assert app.concepts() == ()
+    assert app.paths.journal.joinpath("journal-segments.jsonl").exists()
+    assert len(app.journal_archive.segments()) >= 1
 
     restarted = DiamondApplication(
         tmp_path,
@@ -132,7 +137,81 @@ def test_persistent_learn_commits_and_reloads_memory(tmp_path) -> None:
     assert restarted.crystals(scope="scope:cars")[0].content == (
         "Um motor transforma energia."
     )
+    assert len(restarted.journal_archive.segments()) >= 1
     assert len(calls) == 1
+
+
+def test_research_objective_proposes_queries_before_search(tmp_path) -> None:
+    effects = []
+
+    def adapter(_grant, **kwargs):
+        effects.append(kwargs.get("messages"))
+        return {
+            "content": json.dumps({
+                "queries": [{
+                    "query_id": "q1",
+                    "text": "Roman Empire administrative fragmentation",
+                    "purpose": "find independent historical sources",
+                    "preferred_source_types": ["ACADEMIC"],
+                }],
+            }),
+            "model": "diamond-application-test",
+            "usage": {"total_tokens": 10},
+        }
+
+    def search_adapter(_grant, **kwargs):
+        assert kwargs["queries"][0]["query_id"] == "q1"
+        return {"results": []}
+
+    app = DiamondApplication(
+        tmp_path,
+        adapter,
+        required_permissions=PERMISSIONS,
+        repair_attempts=0,
+    )
+    outcome = app.research_objective(
+        objective="Analyse the fall of Rome",
+        scope="scope:roman-history",
+        search_adapter=search_adapter,
+    )
+
+    assert outcome.result.execution.state.value == "COMPLETED"
+    assert outcome.source_artifact is not None
+    assert outcome.learned == ()
+    assert len(effects) == 1
+
+
+def test_research_objective_normalizes_integer_model_query_ids(tmp_path) -> None:
+    def adapter(_grant, **kwargs):
+        return {
+            "content": json.dumps({
+                "queries": [{
+                    "query_id": 1,
+                    "text": "Roman Empire administrative fragmentation",
+                    "purpose": "find independent historical sources",
+                    "preferred_source_types": ["ACADEMIC"],
+                }],
+            }),
+            "model": "diamond-application-test",
+        }
+
+    def search_adapter(_grant, *, queries, **_kwargs):
+        assert queries[0]["query_id"] == "1"
+        return {"results": []}
+
+    app = DiamondApplication(
+        tmp_path,
+        adapter,
+        required_permissions=PERMISSIONS,
+        repair_attempts=0,
+    )
+    outcome = app.research_objective(
+        objective="Analyse the fall of Rome",
+        scope="scope:roman-history",
+        search_adapter=search_adapter,
+    )
+
+    assert outcome.source_artifact is not None
 
 
 def test_application_rejects_implicit_provenance(tmp_path) -> None:
@@ -1115,3 +1194,43 @@ def test_chat_can_start_without_candidates_or_inventing_memory(
     assert outcome.transcript.elements == ()
     assert outcome.retrieval is None
     assert outcome.model_call_count == 0
+
+
+def test_chat_reflection_routes_through_controller_and_stores_proposal(
+    tmp_path,
+) -> None:
+    def adapter(_grant, **kwargs):
+        joined = "\n".join(item["content"] for item in kwargs["messages"])
+        if 'label="reflection_request"' in joined:
+            return {
+                "content": json.dumps({
+                    "target": "USER_PROFILE",
+                    "category": "style",
+                    "content": "Prefers bounded answers.",
+                    "rationale": "Explicit collaboration signal.",
+                }),
+                "model": "reflection-test",
+            }
+        return {"content": "Resposta limitada.", "model": "reflection-test"}
+
+    app = DiamondApplication(tmp_path, adapter, required_permissions=PERMISSIONS)
+    started = app.start_chat(
+        scope="scope:chat",
+        objective="Preserve a bounded collaboration.",
+    )
+    app.chat_store.append(
+        started.session.session_id,
+        role=ChatRole.USER,
+        content="Please keep answers bounded.",
+        provenance=("operator:user-supplied",),
+    )
+    outcome = app.propose_chat_reflection(
+        started.session.session_id,
+        trigger=ReflectionTrigger.NEW_PREFERENCE,
+    )
+
+    assert outcome.proposal is not None
+    assert outcome.proposal["authority"] == "REFLECTION_PROPOSAL_ONLY"
+    assert isinstance(outcome.stored, UserProfileClaim)
+    assert outcome.stored.state is ProfileState.PROPOSED
+    assert app.user_profile_store.latest(outcome.stored.claim_id) == outcome.stored

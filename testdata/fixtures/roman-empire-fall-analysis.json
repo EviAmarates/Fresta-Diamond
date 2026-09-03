@@ -1,0 +1,136 @@
+{
+  "case_id": "roman-empire-fall-analysis",
+  "description": "A bounded historical analysis must preserve multiple interacting causes without reducing the fall of the Western Roman Empire to one confirmed cause.",
+  "objective": "Learn three curated historical observations and analyse how administrative fragmentation, fiscal-military pressure, and external conflict interacted in the fall of the Western Roman Empire, preserving source identity and unresolved alternatives.",
+  "candidates": [
+    {
+      "element_id": "claim:rome-administrative-fragmentation",
+      "kind": "CLAIM",
+      "content": "A divisão administrativa e a disputa recorrente pelo poder imperial dificultaram a coordenação política do Império Romano do Ocidente.",
+      "scope": "scope:roman-fall",
+      "provenance": [
+        "document:roman-history-curated:administration"
+      ]
+    },
+    {
+      "element_id": "claim:rome-fiscal-military-pressure",
+      "kind": "CLAIM",
+      "content": "A pressão fiscal e militar associada à manutenção do exército reduziu a margem de resposta das instituições ocidentais perante crises prolongadas.",
+      "scope": "scope:roman-fall",
+      "provenance": [
+        "document:roman-history-curated:fiscal-military"
+      ]
+    },
+    {
+      "element_id": "claim:rome-external-conflict",
+      "kind": "CLAIM",
+      "content": "Migrações, conflitos e acordos com grupos externos transformaram o equilíbrio militar e político do Ocidente romano, mas não constituem por si só uma explicação suficiente.",
+      "scope": "scope:roman-fall",
+      "provenance": [
+        "document:roman-history-curated:external-conflict"
+      ]
+    }
+  ],
+  "provider_bundle": {
+    "structural_evidence": {
+      "analysis_id": "fixture",
+      "object_ref": "fixture",
+      "scope": "scope:roman-fall",
+      "analysis_depth": "CONTEXTUAL",
+      "manifestations": [
+        {
+          "manifestation_id": "m1",
+          "object_ref": "fixture",
+          "description": "A queda do Ocidente romano é tratada como uma transformação histórica multicausal, não como um evento explicado por uma única variável.",
+          "provenance": [
+            "document:roman-history-curated:administration",
+            "document:roman-history-curated:fiscal-military",
+            "document:roman-history-curated:external-conflict"
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "relation_id": "r1",
+          "manifestation_id": "m1",
+          "constraint_id": "c1",
+          "forward_justification": "Coordenação política, capacidade fiscal-militar e conflito externo condicionam-se mutuamente no âmbito delimitado.",
+          "constraint_effect": "Uma explicação que elimina uma dimensão relevante perde a cobertura causal do objecto histórico.",
+          "return_witness": "A análise continua a reconhecer a transformação histórica sem a converter numa essência única ou numa conclusão universal.",
+          "excluded_cost_id": "cost1",
+          "scope": "scope:roman-fall"
+        }
+      ],
+      "constraints": [
+        {
+          "constraint_id": "c1",
+          "description": "Preservar explicações multicausais e a distinção entre observação documentada e síntese contextual.",
+          "scope": "scope:roman-fall"
+        }
+      ],
+      "filters": [
+        {
+          "filter_id": "f1",
+          "constraint_id": "c1",
+          "manifestation_id": "m1",
+          "excluded_cost_id": "cost1",
+          "selection_justification": "Retém relações entre as três dimensões e exclui reduções monocausais não sustentadas pelo conjunto curado."
+        }
+      ],
+      "excluded_costs": [
+        {
+          "cost_id": "cost1",
+          "description": "Perda das interacções e da incerteza histórica por redução monocausal.",
+          "excluded_alternatives": [
+            "explicação exclusivamente militar",
+            "explicação exclusivamente económica",
+            "explicação exclusivamente política"
+          ]
+        }
+      ],
+      "groundings": [],
+      "advisory_model_closed": true
+    },
+    "candidate_assessments": [
+      {
+        "source_element_id": "claim:rome-administrative-fragmentation",
+        "claim_mode": "ATTESTATION",
+        "premise_refs": [],
+        "applied_constraints": [],
+        "derivation_direction": null,
+        "test_criterion": null,
+        "horizon": "A observação apoia uma relação contextual, não uma causa suficiente.",
+        "assumptions": [],
+        "counterexample_searches": [
+          "Casos de coordenação política que persistiram apesar da divisão administrativa."
+        ]
+      },
+      {
+        "source_element_id": "claim:rome-fiscal-military-pressure",
+        "claim_mode": "ATTESTATION",
+        "premise_refs": [],
+        "applied_constraints": [],
+        "derivation_direction": null,
+        "test_criterion": null,
+        "horizon": "A pressão descrita é uma condição contributiva no período analisado.",
+        "assumptions": [],
+        "counterexample_searches": [
+          "Períodos de recuperação fiscal ou militar antes da transformação final."
+        ]
+      },
+      {
+        "source_element_id": "claim:rome-external-conflict",
+        "claim_mode": "ATTESTATION",
+        "premise_refs": [],
+        "applied_constraints": [],
+        "derivation_direction": null,
+        "test_criterion": null,
+        "horizon": "Os conflitos alteram o equilíbrio, mas não fecham a explicação.",
+        "assumptions": [],
+        "counterexample_searches": [
+          "Factores internos que limitaram ou amplificaram o efeito dos conflitos externos."
+        ]
+      }
+    ]
+  }
+}

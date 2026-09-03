@@ -44,6 +44,7 @@ class FirewallInterventionError(ConstitutionalFirewallError):
     """One bounded analysis was denied or quarantined before resolution."""
 
     def __init__(self, attestation: "FirewallAttestation") -> None:
+        self.attestation = attestation
         self.analysis_id = attestation.analysis_id
         self.decision = attestation.decision
         super().__init__(
