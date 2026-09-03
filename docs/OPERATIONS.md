@@ -92,6 +92,9 @@ a continuation button backed by the same `chat.resume` and `chat.say` commands.
 Choose `Conversation` for a natural conversational answer or `Analysis` for
 separated observations, interpretations, and open questions. This changes
 presentation only; it never grants authority or closes Phi.
+The collapsed `How Fresta worked` panel gives a short, auditable summary of the
+objective, bounded queries, evidence, learning, attention, and open boundaries;
+it does not expose private model reasoning.
 External sources remain unvalidated until the normal learning and validation
 path says otherwise.
 

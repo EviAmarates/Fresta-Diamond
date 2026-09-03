@@ -23,28 +23,28 @@ WEB_UI = """<!doctype html>
 <head>
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width, initial-scale=1">
- <meta name="theme-color" content="#0b1119">
+ <meta name="theme-color" content="#151515">
  <title>Fresta Diamond · Research</title>
  <style>
    :root {
      color-scheme: dark;
      font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-     --bg: #081018;
-     --panel: rgba(17, 29, 42, .88);
-     --panel-strong: #121f2e;
-     --line: #26394c;
-     --text: #edf5fb;
-     --muted: #91a6b8;
-     --cyan: #53d8e8;
+     --bg: #151515;
+     --panel: rgba(31, 31, 31, .94);
+     --panel-strong: #282828;
+     --line: #3b3b3b;
+     --text: #f1f1ed;
+     --muted: #a8a8a1;
+     --cyan: #a8d8c5;
      --gold: #e6b566;
-     --green: #7cdbad;
-     --red: #ff8e8e;
+     --green: #9bd3aa;
+     --red: #ed9696;
    }
    * { box-sizing: border-box; }
    body {
      min-height: 100vh; margin: 0; color: var(--text);
-     background: radial-gradient(circle at 15% 0%, #15344b 0, transparent 36rem),
-                 radial-gradient(circle at 100% 30%, #20253b 0, transparent 32rem),
+     background: radial-gradient(circle at 15% 0%, #30302d 0, transparent 36rem),
+                 radial-gradient(circle at 100% 30%, #292622 0, transparent 32rem),
                  var(--bg);
    }
    main { width: min(980px, 100%); margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
@@ -52,8 +52,8 @@ WEB_UI = """<!doctype html>
    .brand { display: flex; gap: .85rem; align-items: center; }
    .mark {
      display: grid; place-items: center; width: 2.8rem; height: 2.8rem;
-     border: 1px solid rgba(83, 216, 232, .55); border-radius: 14px;
-     color: var(--cyan); font-size: 1.45rem; box-shadow: 0 0 28px rgba(83, 216, 232, .16);
+     border: 1px solid rgba(168, 216, 197, .55); border-radius: 14px;
+     color: var(--cyan); font-size: 1.45rem; box-shadow: 0 0 28px rgba(168, 216, 197, .12);
    }
    h1, h2, p { margin-top: 0; }
    h1 { margin-bottom: .2rem; font-size: clamp(1.35rem, 3vw, 1.8rem); letter-spacing: -.03em; }
@@ -73,23 +73,23 @@ WEB_UI = """<!doctype html>
    label { display: block; margin: 0 0 .5rem; color: #c7d8e5; font-size: .84rem; font-weight: 650; }
    textarea, input, select {
      width: 100%; border: 1px solid var(--line); border-radius: 11px;
-     background: rgba(5, 13, 21, .72); color: var(--text); font: inherit;
+     background: rgba(12, 12, 12, .72); color: var(--text); font: inherit;
      outline: none; transition: border-color .18s, box-shadow .18s;
    }
    textarea { min-height: 8rem; padding: 1rem; resize: vertical; line-height: 1.5; }
    input, select { padding: .72rem .8rem; }
-   textarea:focus, input:focus, select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(83, 216, 232, .12); }
+   textarea:focus, input:focus, select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(168, 216, 197, .12); }
    .controls { display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end; margin-top: 1rem; }
-   .mode { display: flex; padding: .2rem; border: 1px solid var(--line); border-radius: 11px; background: rgba(5, 13, 21, .5); }
+   .mode { display: flex; padding: .2rem; border: 1px solid var(--line); border-radius: 11px; background: rgba(12, 12, 12, .5); }
    .mode button { flex: 1; padding: .62rem .8rem; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; font: inherit; }
-   .mode button.active { background: #1b3b4d; color: var(--text); }
+   .mode button.active { background: #3a4540; color: var(--text); }
    .actions { display: flex; gap: .6rem; flex-wrap: wrap; }
    button.primary, button.secondary {
      border: 0; border-radius: 10px; padding: .75rem 1.1rem; color: #061019;
      cursor: pointer; font: inherit; font-weight: 750; transition: transform .18s, filter .18s;
    }
-   button.primary { background: linear-gradient(135deg, var(--cyan), #91f0d1); }
-   button.secondary { background: #263c4d; color: var(--text); }
+   button.primary { background: linear-gradient(135deg, var(--cyan), #d6e7b5); }
+   button.secondary { background: #3a3a37; color: var(--text); }
    button:hover { filter: brightness(1.1); transform: translateY(-1px); }
    button:disabled { cursor: wait; opacity: .6; transform: none; }
    .hint { margin: .7rem 0 0; color: var(--muted); font-size: .78rem; }
@@ -104,16 +104,25 @@ WEB_UI = """<!doctype html>
    .status.error { color: var(--red); }
    .status.running { color: var(--cyan); }
    .message { margin: 1rem 0; color: var(--muted); line-height: 1.55; }
-   .response { margin: 1rem 0; padding: 1rem; border-left: 3px solid var(--cyan); border-radius: 0 11px 11px 0; background: rgba(83, 216, 232, .06); white-space: pre-wrap; line-height: 1.62; }
+   .chat-turn { max-width: 88%; margin: 1rem 0; padding: .9rem 1rem; border-radius: 14px; line-height: 1.55; }
+   .chat-turn.user { margin-left: auto; background: #363936; color: #e3ebe5; }
+   .chat-turn.assistant { background: rgba(168, 216, 197, .07); }
+   .response { margin: 0; padding: 0 0 0 1rem; border-left: 3px solid var(--cyan); border-radius: 0; background: transparent; white-space: pre-wrap; line-height: 1.62; }
    .section-label { margin: 1.35rem 0 .65rem; color: #c7d8e5; font-size: .78rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
    .source-list { display: grid; gap: .65rem; }
-   .source { padding: .8rem; border: 1px solid var(--line); border-radius: 11px; background: rgba(5, 13, 21, .38); }
+   .source { padding: .8rem; border: 1px solid var(--line); border-radius: 11px; background: rgba(12, 12, 12, .38); }
    .source a { color: var(--cyan); overflow-wrap: anywhere; }
    .source small { display: block; margin-top: .35rem; color: var(--muted); }
    .empty, .remainder { color: var(--muted); font-size: .88rem; }
    .remainder { padding: .65rem .8rem; border-left: 2px solid var(--gold); background: rgba(230, 181, 102, .06); }
    .phi { margin-top: 1rem; padding: .75rem .85rem; border: 1px solid rgba(230, 181, 102, .28); border-radius: 10px; color: #efd5a6; background: rgba(230, 181, 102, .06); font-size: .88rem; }
-   .technical { margin-top: 1rem; box-shadow: none; background: rgba(5, 13, 21, .28); }
+   .process { margin-top: 1rem; box-shadow: none; background: rgba(12, 12, 12, .28); }
+   .process-list { display: grid; gap: .55rem; margin-top: 1rem; }
+   .process-item { display: grid; grid-template-columns: 10rem 1fr; gap: .8rem; padding: .65rem 0; border-bottom: 1px solid rgba(59, 59, 59, .7); font-size: .86rem; }
+   .process-item:last-child { border-bottom: 0; }
+   .process-item strong { color: #d7e2db; }
+   .process-item span { color: var(--muted); }
+   .technical { margin-top: 1rem; box-shadow: none; background: rgba(12, 12, 12, .28); }
    .technical pre { max-height: 22rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: #a9c4d5; font: .76rem/1.45 ui-monospace, monospace; }
    @media (max-width: 680px) {
      main { padding-top: 1.4rem; } header { margin-bottom: 1.3rem; }
@@ -181,9 +190,10 @@ WEB_UI = """<!doctype html>
        <div class="status" id="status">READY</div>
      </div>
      <p class="message" id="message">The next response will appear here.</p>
+     <div class="chat-turn user" id="user-turn" hidden></div>
      <div id="response-section" hidden>
-       <div class="section-label">Resposta</div>
-       <div class="response" id="response"></div>
+       <div class="section-label">Response</div>
+       <div class="chat-turn assistant"><div class="response" id="response"></div></div>
      </div>
      <div>
        <div class="section-label">Sources &amp; provenance</div>
@@ -194,6 +204,10 @@ WEB_UI = """<!doctype html>
        <div class="source-list" id="remainders"></div>
      </div>
      <div class="phi" id="phi">Φ is open. Fresta is not an oracle.</div>
+     <details class="process">
+       <summary>How Fresta worked</summary>
+       <div class="process-list" id="process"></div>
+     </details>
      <details class="technical">
        <summary>Technical detail</summary>
        <pre id="technical">No execution yet.</pre>
@@ -206,12 +220,14 @@ WEB_UI = """<!doctype html>
    const command = document.getElementById("command");
    const status = document.getElementById("status");
    const message = document.getElementById("message");
+   const userTurn = document.getElementById("user-turn");
    const responseSection = document.getElementById("response-section");
    const responseText = document.getElementById("response");
    const sources = document.getElementById("sources");
    const remaindersSection = document.getElementById("remainders-section");
    const remainders = document.getElementById("remainders");
    const technical = document.getElementById("technical");
+   const process = document.getElementById("process");
    const continueButton = document.getElementById("continue");
    const investigateButton = document.getElementById("investigate");
    const runButton = document.getElementById("run");
@@ -259,19 +275,50 @@ WEB_UI = """<!doctype html>
      card.textContent = item.description || "Open item without a description.";
      return card;
    }
+   function processItem(label, value) {
+     const item = document.createElement("div");
+     item.className = "process-item";
+     const name = document.createElement("strong");
+     name.textContent = label;
+     item.appendChild(name);
+     const detail = document.createElement("span");
+     detail.textContent = value;
+     item.appendChild(detail);
+     return item;
+   }
+   function showProcess(payload, body, sourceCount, remainderCount) {
+     clearChildren(process);
+     const queries = Array.isArray(payload.queries) ? payload.queries : [];
+     const learning = Array.isArray(payload.learning) ? payload.learning : [];
+     const chat = payload.chat || {};
+     const steps = [
+       ["Objective", payload.objective || "Not provided"],
+       ["Mode", payload.response_mode || "conversation"],
+       ["Research", `${queries.length} bounded quer${queries.length === 1 ? "y" : "ies"} proposed`],
+       ["Evidence", sourceCount ? `${sourceCount} external source unit${sourceCount === 1 ? "" : "s"} received` : "No external source units received"],
+       ["Learning", learning.length ? `${learning.length} learning commit${learning.length === 1 ? "" : "s"} recorded` : "No learning commit recorded"],
+       ["Attention", chat.session ? "Persistent attention context created" : "Attention did not start"],
+       ["Boundary", remainderCount ? `${remainderCount} open item${remainderCount === 1 ? "" : "s"} remain` : (body.state === "COMPLETED" ? "No remainder reported" : "Investigation remains open")]
+     ];
+     steps.forEach(([label, value]) => process.appendChild(processItem(label, value)));
+   }
    function showResult(body) {
      const payload = body.payload || {};
      const chat = payload.chat || {};
      const answer = chat.assistant_message || {};
      setStatus(body.state || "UNKNOWN");
      message.textContent = body.message || "No result message.";
+     userTurn.hidden = !payload.objective;
+     userTurn.textContent = payload.objective || "";
      responseSection.hidden = !answer.content;
      responseText.textContent = answer.content || "";
-     showList(sources, Array.isArray(payload.sources) ? payload.sources : [], "No external source units were produced.", sourceCard);
+     const sourceItems = Array.isArray(payload.sources) ? payload.sources : [];
+     showList(sources, sourceItems, "No external source units were produced.", sourceCard);
      const openRemainders = Array.isArray(payload.remainders) ? payload.remainders : [];
      remaindersSection.hidden = openRemainders.length === 0;
      showList(remainders, openRemainders, "", remainderCard);
      document.getElementById("phi").hidden = payload.phi_open !== true;
+     showProcess(payload, body, sourceItems.length, openRemainders.length);
      technical.textContent = JSON.stringify(body, null, 2);
      const session = chat.session;
      continuation = body.continuation_checkpoint_id && session

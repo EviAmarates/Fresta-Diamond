@@ -84,6 +84,7 @@ def test_web_adapter_serves_local_ui() -> None:
         assert "Sources &amp; provenance" in body
         assert "Φ is open" in body
         assert "Analysis" in body
+        assert "How Fresta worked" in body
     finally:
         server.shutdown()
         server.server_close()

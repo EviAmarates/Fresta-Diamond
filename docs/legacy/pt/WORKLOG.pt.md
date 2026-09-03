@@ -1431,3 +1431,14 @@ sem ultrapassar os budgets e grants declarados.
   defeito, permite overrides por ambiente e abre o browser automaticamente.
 - A autoridade continua no serviço Diamond; a UI apenas apresenta o percurso e
   nunca fecha Φ.
+
+## 2026-09-03 — trace explicável e paleta neutra
+
+- A paleta nocturna foi suavizada para carvão/cinza, com acentos mínimos para
+  estado, atenção e fronteiras abertas.
+- A resposta Web passou a ter uma apresentação de conversa mais próxima de um
+  assistente moderno, separando turno do utilizador e resposta do Fresta.
+- `How Fresta worked` mostra um resumo colapsável do percurso observável:
+  objectivo, queries bounded, evidência, aprendizagem, atenção e limites.
+- O painel é um trace de auditoria; não expõe raciocínio privado da LLM nem
+  concede autoridade adicional.
