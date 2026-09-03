@@ -2,7 +2,7 @@
 
 Este documento traduz a ontologia do Fresta em restrições de engenharia. Não
 substitui o kernel geral em
-[`../../ONTOLOGICAL_KERNEL-v3-DRAFT.md`](../../ONTOLOGICAL_KERNEL-v3-DRAFT.md).
+[`../../../ONTOLOGICAL_KERNEL-v3-DRAFT.md`](../../../ONTOLOGICAL_KERNEL-v3-DRAFT.md).
 
 ## Primitivas
 

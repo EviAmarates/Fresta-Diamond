@@ -2,7 +2,7 @@
 
 Status: executable architectural draft — milestones 1–3 implemented  
 Version: 0.2.0-draft  
-Authority: subordinate to [`../../ONTOLOGICAL_KERNEL-v3-DRAFT.md`](../../ONTOLOGICAL_KERNEL-v3-DRAFT.md)
+Authority: subordinate to [`../ONTOLOGICAL_KERNEL-v3-DRAFT.md`](../ONTOLOGICAL_KERNEL-v3-DRAFT.md)
 
 Current implementation and resumption map: `STATUS.md`.
 
