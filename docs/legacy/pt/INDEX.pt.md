@@ -41,7 +41,7 @@ Este é o ponto de entrada para tudo o que pertence ao protótipo Diamond.
 ## Autoridade documental
 
 1. O kernel ontológico geral do Fresta continua em
-   [`../../ONTOLOGICAL_KERNEL-v3-DRAFT.md`](../../ONTOLOGICAL_KERNEL-v3-DRAFT.md).
+   [`../../../ONTOLOGICAL_KERNEL-v3-DRAFT.md`](../../../ONTOLOGICAL_KERNEL-v3-DRAFT.md).
 2. Este diretório contém a tradução e as decisões específicas do Diamond.
 3. O código e os testes demonstram o comportamento atualmente implementado.
 4. Ideias ainda não implementadas aparecem como `WIP`, não como garantias.
